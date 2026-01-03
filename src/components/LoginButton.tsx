@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { signInWithGoogle } from "@/lib/auth";
+import { css } from "../../styled-system/css";
 
 export const LoginButton = () => {
   const handleLogin = async () => {
@@ -13,7 +14,7 @@ export const LoginButton = () => {
   };
 
   return (
-    <Button onClick={handleLogin} className="w-full">
+    <Button onClick={handleLogin} className={css({ w: "full" })}>
       Login with Google
     </Button>
   );
