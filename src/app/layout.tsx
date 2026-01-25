@@ -27,7 +27,8 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable}`}
+        style={{ fontFamily: 'var(--font-geist-sans)', WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' }}
       >
         <AuthProvider>{children}</AuthProvider>
         <Analytics />

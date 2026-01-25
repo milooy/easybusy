@@ -2,13 +2,14 @@
 
 import { LoginButton } from "@/components/LoginButton";
 import { useAuth } from "@/contexts/AuthContext";
+import { css } from "../../styled-system/css";
 
 export default function Home() {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className={css({ minH: "screen", display: "flex", alignItems: "center", justifyContent: "center" })}>
         loading...
       </div>
     );
@@ -16,11 +17,11 @@ export default function Home() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full mx-auto p-6">
-          <div className="flex flex-col items-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">My app</h1>
-            <p className="text-gray-600">Yurim template</p>
+      <div className={css({ minH: "screen", display: "flex", alignItems: "center", justifyContent: "center", bg: "gray.50" })}>
+        <div className={css({ maxW: "md", w: "full", mx: "auto", p: "6" })}>
+          <div className={css({ display: "flex", flexDirection: "column", alignItems: "center", mb: "8" })}>
+            <h1 className={css({ fontSize: "3xl", fontWeight: "bold", color: "gray.900", mb: "2" })}>My app</h1>
+            <p className={css({ color: "gray.600" })}>Yurim template</p>
           </div>
           <LoginButton />
         </div>
