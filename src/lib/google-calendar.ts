@@ -103,10 +103,14 @@ export const fetchCalendarList = async (): Promise<GoogleCalendar[]> => {
 
 /**
  * 특정 날짜의 일정 조회 (모든 연결된 계정에서)
+ * @param calendarIds 조회할 캘린더 ID 목록
+ * @param date 조회할 날짜
+ * @param calendars 캘린더 목록 (이미 조회된 데이터를 재사용하여 중복 API 호출 방지)
  */
 export const fetchEventsForDate = async (
   calendarIds: string[],
   date: Date,
+  calendars: GoogleCalendar[],
 ): Promise<GoogleEvent[]> => {
   const tokenPairs = await getGoogleTokensWithRefresh();
 
@@ -123,9 +127,8 @@ export const fetchEventsForDate = async (
   const timeMin = startOfDay.toISOString();
   const timeMax = endOfDay.toISOString();
 
-  // 캘린더 목록 가져와서 매핑
-  const calendarsData = await fetchCalendarList();
-  const calendarMap = new Map(calendarsData.map((c) => [c.id, c]));
+  // 전달받은 캘린더 목록으로 매핑 (중복 API 호출 제거)
+  const calendarMap = new Map(calendars.map((c) => [c.id, c]));
 
   const allEvents: GoogleEvent[] = [];
 
