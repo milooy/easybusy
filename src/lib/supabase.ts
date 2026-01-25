@@ -1,12 +1,14 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
 
 const createSupabaseClient = (): SupabaseClient<Database> => {
   if (!supabaseUrl || !supabaseAnonKey) {
-    // 빌드 타임에 환경변수가 없을 경우 더미 클라이언트 반환
-    return createClient<Database>("https://placeholder.supabase.co", "placeholder");
+    if (typeof window === "undefined") {
+      return createClient<Database>("https://placeholder.supabase.co", "placeholder");
+    }
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
   }
   return createClient<Database>(supabaseUrl, supabaseAnonKey);
 };
