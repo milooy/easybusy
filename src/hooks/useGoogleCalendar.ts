@@ -1,115 +1,112 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   fetchCalendarList,
   fetchEventsForDate,
-  GoogleCalendar,
-  GoogleEvent,
-} from '@/lib/google-calendar';
-import { getGoogleTokens } from '@/lib/google-token';
+  getGoogleTokensWithRefresh,
+} from "@/lib/google-calendar";
+import { useAuth } from "@/contexts/AuthContext";
 
-const SELECTED_CALENDARS_KEY = 'selectedCalendarIds';
+const SELECTED_CALENDARS_KEY = "selectedCalendarIds";
+
+// localStorage에서 선택된 캘린더 ID 불러오기
+const getStoredCalendarIds = (): string[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(SELECTED_CALENDARS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+// 선택된 캘린더 ID 저장
+const saveCalendarIds = (ids: string[]) => {
+  if (typeof window === "undefined") return;
+  if (ids.length > 0) {
+    localStorage.setItem(SELECTED_CALENDARS_KEY, JSON.stringify(ids));
+  }
+};
 
 export const useGoogleCalendar = () => {
-  const [calendars, setCalendars] = useState<GoogleCalendar[]>([]);
-  const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]);
-  const [events, setEvents] = useState<GoogleEvent[]>([]);
+  const { user } = useAuth();
+  const userId = user?.id;
+
+  const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>(
+    getStoredCalendarIds
+  );
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [connectedEmails, setConnectedEmails] = useState<string[]>([]);
-  const [isConnected, setIsConnected] = useState<boolean | null>(null); // null = 로딩 중
 
-  // localStorage에서 선택된 캘린더 불러오기
-  useEffect(() => {
-    const stored = localStorage.getItem(SELECTED_CALENDARS_KEY);
-    if (stored) {
-      try {
-        setSelectedCalendarIds(JSON.parse(stored));
-      } catch {
-        // 무시
-      }
-    }
-  }, []);
+  // 토큰 조회 (1회만 - 다른 쿼리에서 재사용)
+  const { data: tokenPairs = [], isLoading: isTokensLoading } = useQuery({
+    queryKey: ["googleTokenPairs", userId],
+    queryFn: () => getGoogleTokensWithRefresh(userId),
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 5, // 5분
+  });
 
-  // 선택된 캘린더 저장
-  useEffect(() => {
-    if (selectedCalendarIds.length > 0) {
-      localStorage.setItem(SELECTED_CALENDARS_KEY, JSON.stringify(selectedCalendarIds));
-    }
-  }, [selectedCalendarIds]);
+  const isConnected = tokenPairs.length > 0;
+  const connectedEmails = tokenPairs.map((t) => t.token.email);
 
-  // 연결 상태 확인
-  const checkConnection = useCallback(async () => {
-    try {
-      const tokens = await getGoogleTokens();
-      const emails = tokens.map(t => t.email);
-      setConnectedEmails(emails);
-      setIsConnected(emails.length > 0);
-      return emails.length > 0;
-    } catch {
-      setIsConnected(false);
-      return false;
-    }
-  }, []);
-
-  // 캘린더 목록 조회
-  const loadCalendars = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // 먼저 연결 상태 확인
-      const connected = await checkConnection();
-      if (!connected) {
-        setCalendars([]);
-        setLoading(false);
-        return;
-      }
-
-      const list = await fetchCalendarList();
-      setCalendars(list);
-
-      // 처음 로드 시 모든 캘린더 선택
-      if (selectedCalendarIds.length === 0 && list.length > 0) {
-        const allIds = list.map((c) => c.id);
+  // 캘린더 목록 조회 (tokenPairs 전달로 중복 조회 방지)
+  const {
+    data: calendars = [],
+    isLoading: isCalendarsLoading,
+    error: calendarsError,
+  } = useQuery({
+    queryKey: ["googleCalendars", userId],
+    queryFn: () => fetchCalendarList(tokenPairs),
+    enabled: !!userId && tokenPairs.length > 0,
+    staleTime: 1000 * 60 * 5, // 5분
+    select: (data) => {
+      // 처음 로드 시 모든 캘린더 선택 (localStorage에 저장된 값이 없을 때만)
+      if (selectedCalendarIds.length === 0 && data.length > 0) {
+        const allIds = data.map((c) => c.id);
         setSelectedCalendarIds(allIds);
+        saveCalendarIds(allIds);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load calendars');
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedCalendarIds.length, checkConnection]);
+      return data;
+    },
+  });
 
-  // 일정 조회
-  const loadEvents = useCallback(async () => {
-    if (selectedCalendarIds.length === 0) {
-      setEvents([]);
-      return;
-    }
+  // 날짜 문자열 (쿼리 키용)
+  const dateKey = useMemo(() => {
+    return selectedDate.toISOString().split("T")[0];
+  }, [selectedDate]);
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const eventList = await fetchEventsForDate(selectedCalendarIds, selectedDate);
-      setEvents(eventList);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load events');
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedCalendarIds, selectedDate]);
+  // 일정 조회 (tokenPairs 전달로 중복 조회 방지)
+  const {
+    data: events = [],
+    isLoading: isEventsLoading,
+    error: eventsError,
+  } = useQuery({
+    queryKey: ["googleEvents", userId, dateKey, selectedCalendarIds],
+    queryFn: () =>
+      fetchEventsForDate(
+        selectedCalendarIds,
+        selectedDate,
+        calendars,
+        tokenPairs
+      ),
+    enabled:
+      !!userId &&
+      tokenPairs.length > 0 &&
+      selectedCalendarIds.length > 0 &&
+      calendars.length > 0,
+    staleTime: 1000 * 60 * 2, // 2분
+  });
 
   // 캘린더 선택 토글
   const toggleCalendar = useCallback((calendarId: string) => {
-    setSelectedCalendarIds((prev) =>
-      prev.includes(calendarId)
+    setSelectedCalendarIds((prev) => {
+      const newIds = prev.includes(calendarId)
         ? prev.filter((id) => id !== calendarId)
-        : [...prev, calendarId]
-    );
+        : [...prev, calendarId];
+      saveCalendarIds(newIds);
+      return newIds;
+    });
   }, []);
 
   // 날짜 변경
@@ -137,6 +134,21 @@ export const useGoogleCalendar = () => {
     setSelectedDate(new Date());
   }, []);
 
+  // 로딩 상태 (user가 없으면 아직 로딩 중)
+  const loading =
+    !userId || isTokensLoading || isCalendarsLoading || isEventsLoading;
+
+  // 에러 메시지
+  const error = calendarsError
+    ? calendarsError instanceof Error
+      ? calendarsError.message
+      : "Failed to load calendars"
+    : eventsError
+      ? eventsError instanceof Error
+        ? eventsError.message
+        : "Failed to load events"
+      : null;
+
   return {
     calendars,
     selectedCalendarIds,
@@ -144,10 +156,8 @@ export const useGoogleCalendar = () => {
     selectedDate,
     loading,
     error,
-    isConnected,
+    isConnected: !userId || isTokensLoading ? null : isConnected,
     connectedEmails,
-    loadCalendars,
-    loadEvents,
     toggleCalendar,
     goToDate,
     goToPrevDay,

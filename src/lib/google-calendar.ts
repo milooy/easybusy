@@ -41,11 +41,12 @@ export interface GoogleEvent {
 
 /**
  * 연결된 모든 구글 계정의 토큰 가져오기
+ * @param userId 사용자 ID (전달하면 getUser() 호출 생략)
  */
-export const getGoogleTokensWithRefresh = async (): Promise<
-  { token: GoogleToken; accessToken: string }[]
-> => {
-  const tokens = await getGoogleTokens();
+export const getGoogleTokensWithRefresh = async (
+  userId?: string
+): Promise<{ token: GoogleToken; accessToken: string }[]> => {
+  const tokens = await getGoogleTokens(userId);
   const validTokens: { token: GoogleToken; accessToken: string }[] = [];
 
   for (const token of tokens) {
@@ -60,17 +61,20 @@ export const getGoogleTokensWithRefresh = async (): Promise<
 
 /**
  * 모든 연결된 계정의 캘린더 목록 조회
+ * @param tokenPairs 토큰 목록 (전달하면 DB 조회 생략)
  */
-export const fetchCalendarList = async (): Promise<GoogleCalendar[]> => {
-  const tokenPairs = await getGoogleTokensWithRefresh();
+export const fetchCalendarList = async (
+  tokenPairs?: { token: GoogleToken; accessToken: string }[]
+): Promise<GoogleCalendar[]> => {
+  const pairs = tokenPairs ?? (await getGoogleTokensWithRefresh());
 
-  if (tokenPairs.length === 0) {
+  if (pairs.length === 0) {
     return [];
   }
 
   const allCalendars: GoogleCalendar[] = [];
 
-  for (const { token, accessToken } of tokenPairs) {
+  for (const { token, accessToken } of pairs) {
     try {
       const response = await fetch(
         `${CALENDAR_API_BASE}/users/me/calendarList`,
@@ -103,14 +107,20 @@ export const fetchCalendarList = async (): Promise<GoogleCalendar[]> => {
 
 /**
  * 특정 날짜의 일정 조회 (모든 연결된 계정에서)
+ * @param calendarIds 조회할 캘린더 ID 목록
+ * @param date 조회할 날짜
+ * @param calendars 캘린더 목록 (이미 조회된 데이터를 재사용하여 중복 API 호출 방지)
+ * @param tokenPairs 토큰 목록 (전달하면 DB 조회 생략)
  */
 export const fetchEventsForDate = async (
   calendarIds: string[],
   date: Date,
+  calendars: GoogleCalendar[],
+  tokenPairs?: { token: GoogleToken; accessToken: string }[]
 ): Promise<GoogleEvent[]> => {
-  const tokenPairs = await getGoogleTokensWithRefresh();
+  const pairs = tokenPairs ?? (await getGoogleTokensWithRefresh());
 
-  if (tokenPairs.length === 0) {
+  if (pairs.length === 0) {
     return [];
   }
 
@@ -123,13 +133,12 @@ export const fetchEventsForDate = async (
   const timeMin = startOfDay.toISOString();
   const timeMax = endOfDay.toISOString();
 
-  // 캘린더 목록 가져와서 매핑
-  const calendarsData = await fetchCalendarList();
-  const calendarMap = new Map(calendarsData.map((c) => [c.id, c]));
+  // 전달받은 캘린더 목록으로 매핑 (중복 API 호출 제거)
+  const calendarMap = new Map(calendars.map((c) => [c.id, c]));
 
   const allEvents: GoogleEvent[] = [];
 
-  for (const { token, accessToken } of tokenPairs) {
+  for (const { token, accessToken } of pairs) {
     // 이 계정에 해당하는 캘린더만 필터링
     const accountCalendarIds = calendarIds.filter((id) => {
       const cal = calendarMap.get(id);

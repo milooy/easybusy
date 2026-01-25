@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AuthGuard } from "@/components/AuthGuard";
 import {
   DailyTimeline,
@@ -123,8 +123,6 @@ function AppContent() {
     error,
     isConnected,
     connectedEmails,
-    loadCalendars,
-    loadEvents,
     toggleCalendar,
     goToPrevDay,
     goToNextDay,
@@ -133,16 +131,6 @@ function AppContent() {
 
   const [selectedEvent, setSelectedEvent] = useState<GoogleEvent | null>(null);
   const [showCalendarSelector, setShowCalendarSelector] = useState(false);
-
-  useEffect(() => {
-    loadCalendars();
-  }, [loadCalendars]);
-
-  useEffect(() => {
-    if (selectedCalendarIds.length > 0) {
-      loadEvents();
-    }
-  }, [selectedCalendarIds, selectedDate, loadEvents]);
 
   const maxWidth = isConnected === null || !isConnected ? "md" : "3xl";
 
