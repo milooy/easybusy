@@ -1,6 +1,5 @@
 import { cx } from "../../styled-system/css";
-import { type SystemStyleObject } from "../../styled-system/types";
 
-export function cn(...inputs: (SystemStyleObject | string | undefined | null | false)[]) {
+export function cn(...inputs: (string | boolean | undefined | null)[]) {
   return cx(...inputs);
 }

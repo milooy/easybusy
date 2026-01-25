@@ -1,34 +1,107 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
-// TODO: supabase gen types로 실제 타입 생성 필요
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+const createSupabaseClient = (): SupabaseClient<Database> => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    // 빌드 타임에 환경변수가 없을 경우 더미 클라이언트 반환
+    return createClient<Database>("https://placeholder.supabase.co", "placeholder");
+  }
+  return createClient<Database>(supabaseUrl, supabaseAnonKey);
+};
+
 export type Database = {
   public: {
     Tables: {
       folders: {
         Row: {
-          id: string
-          user_id: string
-          name: string
-          created_at: string
-        }
+          id: string;
+          user_id: string;
+          name: string;
+          created_at: string;
+        };
         Insert: {
-          id?: string
-          user_id: string
-          name: string
-          created_at?: string
-        }
+          id?: string;
+          user_id: string;
+          name: string;
+          created_at?: string;
+        };
         Update: {
-          id?: string
-          user_id?: string
-          name?: string
-          created_at?: string
-        }
-      }
-    }
-  }
-}
+          id?: string;
+          user_id?: string;
+          name?: string;
+          created_at?: string;
+        };
+      };
+      tags: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          created_at?: string;
+        };
+      };
+      bookmarks: {
+        Row: {
+          id: string;
+          user_id: string;
+          folder_id: string | null;
+          url: string;
+          title: string | null;
+          description: string | null;
+          favicon: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          folder_id?: string | null;
+          url: string;
+          title?: string | null;
+          description?: string | null;
+          favicon?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          folder_id?: string | null;
+          url?: string;
+          title?: string | null;
+          description?: string | null;
+          favicon?: string | null;
+          created_at?: string;
+        };
+      };
+      bookmark_tags: {
+        Row: {
+          bookmark_id: string;
+          tag_id: string;
+        };
+        Insert: {
+          bookmark_id: string;
+          tag_id: string;
+        };
+        Update: {
+          bookmark_id?: string;
+          tag_id?: string;
+        };
+      };
+    };
+  };
+};
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!;
-
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+export const supabase = createSupabaseClient();
