@@ -142,6 +142,35 @@ export default function LandingPage() {
           <FeatureCard key={feature.title} {...feature} />
         ))}
       </div>
+
+      {/* 법적 링크 */}
+      <div
+        className={css({
+          display: "flex",
+          justifyContent: "center",
+          gap: "6",
+          py: "8",
+          fontSize: "sm",
+          color: "gray.500",
+        })}
+      >
+        <Link
+          href="/privacy"
+          className={css({
+            _hover: { color: "gray.700", textDecoration: "underline" },
+          })}
+        >
+          개인정보처리방침
+        </Link>
+        <Link
+          href="/terms"
+          className={css({
+            _hover: { color: "gray.700", textDecoration: "underline" },
+          })}
+        >
+          이용약관
+        </Link>
+      </div>
     </PageLayout>
   );
 }
