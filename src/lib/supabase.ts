@@ -1,4 +1,5 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
@@ -6,11 +7,12 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
 const createSupabaseClient = (): SupabaseClient<Database> => {
   if (!supabaseUrl || !supabaseAnonKey) {
     if (typeof window === "undefined") {
-      return createClient<Database>("https://placeholder.supabase.co", "placeholder");
+      // SSR placeholder - 실제 서버에서는 supabase-server.ts 사용
+      return createBrowserClient<Database>("https://placeholder.supabase.co", "placeholder");
     }
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
   }
-  return createClient<Database>(supabaseUrl, supabaseAnonKey);
+  return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
 };
 
 export type Database = {

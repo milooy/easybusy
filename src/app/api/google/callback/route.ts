@@ -1,6 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
@@ -73,46 +72,26 @@ export async function GET(request: NextRequest) {
 
     const userInfo: GoogleUserInfo = await userInfoResponse.json();
 
-    // 3. Supabase 세션에서 현재 사용자 확인
-    const cookieStore = await cookies();
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseServiceKey =
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!;
+    // 3. Supabase SSR 클라이언트로 현재 사용자 확인
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    // 서비스 롤 키로 Supabase 클라이언트 생성 (RLS 우회)
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
-    // 쿠키에서 Supabase 세션 토큰 가져오기
-    const accessToken = cookieStore.get("sb-access-token")?.value;
-
-    if (!accessToken) {
+    if (userError || !user) {
+      console.error("User session error:", userError);
       return NextResponse.redirect(
         new URL("/login?error=not_logged_in", request.url),
       );
     }
 
-    // 일반 클라이언트로 사용자 확인
-    const supabaseAnonKey =
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(accessToken);
-
-    if (userError || !user) {
-      return NextResponse.redirect(
-        new URL("/login?error=session_invalid", request.url),
-      );
-    }
-
-    // 4. 토큰 저장 (upsert)
+    // 4. SSR 클라이언트로 토큰 저장 (RLS 정책 적용)
     const expiresAt = new Date(
       Date.now() + tokens.expires_in * 1000,
     ).toISOString();
 
-    const { error: upsertError } = await supabaseAdmin
+    const { error: upsertError } = await supabase
       .from("google_tokens")
       .upsert(
         {
@@ -129,8 +108,10 @@ export async function GET(request: NextRequest) {
 
     if (upsertError) {
       console.error("Token save failed:", upsertError);
+      // 디버깅용: 에러 메시지를 URL에 포함
+      const errorMsg = encodeURIComponent(upsertError.message || "unknown");
       return NextResponse.redirect(
-        new URL("/?error=token_save_failed", request.url),
+        new URL(`/?error=token_save_failed&detail=${errorMsg}`, request.url),
       );
     }
 
