@@ -36,7 +36,7 @@ export const AuthGuard = ({ children, fallback = <DefaultLoading /> }: AuthGuard
 };
 
 /**
- * 미인증 사용자만 접근 가능 - 인증 시 /로 리다이렉트 (로그인 페이지용)
+ * 미인증 사용자만 접근 가능 - 인증 시 /app으로 리다이렉트 (로그인 페이지용)
  */
 export const GuestGuard = ({ children, fallback = <DefaultLoading /> }: AuthGuardProps) => {
   const { user, loading } = useAuth();
@@ -44,7 +44,7 @@ export const GuestGuard = ({ children, fallback = <DefaultLoading /> }: AuthGuar
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/");
+      router.replace("/app");
     }
   }, [user, loading, router]);
 
