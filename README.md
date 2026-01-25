@@ -5,18 +5,16 @@
 - **프레임워크**: Next.js 15.3.2
 - **언어**: TypeScript
 - **UI 라이브러리**: React 19
-- **스타일링**: Tailwind CSS 4
+- **스타일링**: PandaCSS
 - **데이터베이스**: Supabase
-- **UI 컴포넌트**: Radix UI, Shadcn UI, Lucide React
+- **UI 컴포넌트**: Lucide React
 
 ## 주요 기능
 
 - Supabase를 활용한 서버리스 백엔드 통합
-- Radix UI를 활용한 접근성 높은 UI 컴포넌트
 - Vercel Analytics 통합
 - TypeScript를 통한 타입 안정성
 - ESLint를 통한 코드 품질 관리
-- Tailwind CSS를 활용한 반응형 디자인
 
 ## 프로젝트 구조
 
@@ -79,7 +77,7 @@ Vercel 프로젝트 설정에서 다음 환경 변수를 추가하세요:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://kcvzukpsrulvenfxzjph.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtjdnp1a3BzcnVsdmVuZnh6anBoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNjQ1NzAsImV4cCI6MjA2NTc0MDU3MH0.oMbsSTqIQh2mIwHOVT7L4wXhujvUtgnzB6pzsdD0aJ4
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtjdnp1a3BzcnVsdmVuZnh6anBoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxNjQ1NzAsImV4cCI6MjA2NTc0MDU3MH0.oMbsSTqIQh2mIwHOVT7L4wXhujvUtgnzB6pzsdD0aJ4
 NEXT_PUBLIC_APP_URL=https://donedrop.vercel.app
 ```
 
