@@ -15,8 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Please update this title",
-  description: "Please update this description",
+  title: "Easybusy",
+  description: "구글 캘린더를 연동하여 일정을 쉽게 관리하세요",
+  verification: {
+    google: "a9MK2ZmU0prS_FpWOYEHz1kVu3NRA3jVo1WETuSj0lI",
+  },
 };
 
 export default function RootLayout({

@@ -51,11 +51,24 @@ function HomePage() {
   // 연결 상태 확인 중
   if (isConnected === null) {
     return (
-      <div className={css({ minH: "screen", bg: "gray.50", display: "flex", flexDirection: "column" })}>
-        <div className={css({ flex: "1", display: "flex", alignItems: "center", justifyContent: "center" })}>
+      <div
+        className={css({
+          minH: "screen",
+          bg: "gray.50",
+          display: "flex",
+          flexDirection: "column",
+        })}
+      >
+        <div
+          className={css({
+            flex: "1",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          })}
+        >
           <div className={css({ color: "gray.500" })}>로딩 중...</div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -63,11 +76,25 @@ function HomePage() {
   // 구글 연결 안 됨
   if (!isConnected) {
     return (
-      <div className={css({ minH: "screen", bg: "gray.50", display: "flex", flexDirection: "column" })}>
+      <div
+        className={css({
+          minH: "screen",
+          bg: "gray.50",
+          display: "flex",
+          flexDirection: "column",
+        })}
+      >
         <div className={css({ flex: "1" })}>
           <div className={css({ maxW: "md", mx: "auto", p: "4", pt: "20" })}>
             <div className={css({ textAlign: "center", mb: "8" })}>
-              <h1 className={css({ fontSize: "2xl", fontWeight: "bold", color: "gray.900", mb: "2" })}>
+              <h1
+                className={css({
+                  fontSize: "2xl",
+                  fontWeight: "bold",
+                  color: "gray.900",
+                  mb: "2",
+                })}
+              >
                 Easybusy
               </h1>
               <p className={css({ color: "gray.600" })}>
@@ -77,18 +104,36 @@ function HomePage() {
             <GoogleConnectButton connectedEmails={[]} onDisconnect={() => {}} />
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className={css({ minH: "screen", bg: "gray.50", display: "flex", flexDirection: "column" })}>
+    <div
+      className={css({
+        minH: "screen",
+        bg: "gray.50",
+        display: "flex",
+        flexDirection: "column",
+      })}
+    >
       <div className={css({ flex: "1" })}>
         <div className={css({ maxW: "3xl", mx: "auto", p: "4" })}>
           {/* 헤더 */}
-          <div className={flex({ justify: "space-between", align: "center", mb: "6" })}>
-            <h1 className={css({ fontSize: "2xl", fontWeight: "bold", color: "gray.900" })}>
+          <div
+            className={flex({
+              justify: "space-between",
+              align: "center",
+              mb: "6",
+            })}
+          >
+            <h1
+              className={css({
+                fontSize: "2xl",
+                fontWeight: "bold",
+                color: "gray.900",
+              })}
+            >
               Easybusy
             </h1>
             <button
@@ -111,20 +156,38 @@ function HomePage() {
 
           {/* 에러 표시 */}
           {error && (
-            <div className={css({ p: "4", mb: "4", bg: "red.50", color: "red.700", borderRadius: "lg" })}>
+            <div
+              className={css({
+                p: "4",
+                mb: "4",
+                bg: "red.50",
+                color: "red.700",
+                borderRadius: "lg",
+              })}
+            >
               {error}
             </div>
           )}
 
           {/* 캘린더 선택기 */}
           {showCalendarSelector && (
-            <div className={css({ mb: "4", display: "flex", flexDirection: "column", gap: "4" })}>
+            <div
+              className={css({
+                mb: "4",
+                display: "flex",
+                flexDirection: "column",
+                gap: "4",
+              })}
+            >
               <CalendarSelector
                 calendars={calendars}
                 selectedIds={selectedCalendarIds}
                 onToggle={toggleCalendar}
               />
-              <GoogleConnectButton connectedEmails={connectedEmails} onDisconnect={() => {}} />
+              <GoogleConnectButton
+                connectedEmails={connectedEmails}
+                onDisconnect={() => {}}
+              />
             </div>
           )}
 
@@ -140,29 +203,53 @@ function HomePage() {
 
           {/* 로딩 */}
           {loading && (
-            <div className={css({ textAlign: "center", py: "8", color: "gray.500" })}>
+            <div
+              className={css({
+                textAlign: "center",
+                py: "8",
+                color: "gray.500",
+              })}
+            >
               로딩 중...
             </div>
           )}
 
           {/* 타임라인 */}
           {!loading && (
-            <div className={css({ bg: "white", borderRadius: "xl", boxShadow: "sm", p: "4" })}>
+            <div
+              className={css({
+                bg: "white",
+                borderRadius: "xl",
+                boxShadow: "sm",
+                p: "4",
+              })}
+            >
               {events.length === 0 ? (
-                <div className={css({ textAlign: "center", py: "12", color: "gray.500" })}>
+                <div
+                  className={css({
+                    textAlign: "center",
+                    py: "12",
+                    color: "gray.500",
+                  })}
+                >
                   일정이 없습니다
                 </div>
               ) : (
-                <DailyTimeline events={events} onEventClick={setSelectedEvent} />
+                <DailyTimeline
+                  events={events}
+                  onEventClick={setSelectedEvent}
+                />
               )}
             </div>
           )}
 
           {/* 상세 모달 */}
-          <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
+          <EventDetailModal
+            event={selectedEvent}
+            onClose={() => setSelectedEvent(null)}
+          />
         </div>
       </div>
-      <Footer />
     </div>
   );
 }
@@ -171,6 +258,7 @@ export default function Home() {
   return (
     <AuthGuard>
       <HomePage />
+      <Footer />
     </AuthGuard>
   );
 }
