@@ -13,21 +13,30 @@ export interface GoogleToken {
 
 /**
  * 현재 사용자의 모든 구글 토큰 조회
+ * @param userId 사용자 ID (전달하면 getUser() 호출 생략)
  */
-export const getGoogleTokens = async (): Promise<GoogleToken[]> => {
-  const { data: { user } } = await supabase.auth.getUser();
+export const getGoogleTokens = async (userId?: string): Promise<GoogleToken[]> => {
+  let uid = userId;
 
-  if (!user) {
+  // userId가 없으면 getUser() 호출 (fallback)
+  if (!uid) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    uid = user?.id;
+  }
+
+  if (!uid) {
     return [];
   }
 
   const { data, error } = await supabase
-    .from('google_tokens')
-    .select('*')
-    .eq('user_id', user.id);
+    .from("google_tokens")
+    .select("*")
+    .eq("user_id", uid);
 
   if (error) {
-    console.error('Failed to fetch google tokens:', error);
+    console.error("Failed to fetch google tokens:", error);
     return [];
   }
 
