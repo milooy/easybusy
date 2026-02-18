@@ -9,6 +9,7 @@ import {
   EventDetailModal,
   GoogleConnectButton,
 } from "@/components/calendar";
+import { TodoInbox } from "@/components/todo/TodoInbox";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { GoogleEvent } from "@/lib/google-calendar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -129,7 +130,7 @@ function AppContent() {
 
   const [selectedEvent, setSelectedEvent] = useState<GoogleEvent | null>(null);
 
-  const maxWidth = isConnected === null || !isConnected ? "md" : "3xl";
+  const maxWidth = isConnected === null || !isConnected ? "md" : "4xl";
 
   return (
     <PageLayout maxWidth={maxWidth} showFooter={false}>
@@ -167,42 +168,50 @@ function AppContent() {
             />
           </div>
 
-          {loading && (
-            <div
-              className={css({
-                textAlign: "center",
-                py: "8",
-                color: "gray.500",
-              })}
-            >
-              로딩 중...
-            </div>
-          )}
-
-          {!loading && (
-            <div
-              className={css({
-                bg: "white",
-                borderRadius: "xl",
-                boxShadow: "sm",
-                p: "4",
-              })}
-            >
-              {events.length === 0 ? (
+          <div className={flex({ align: "flex-start", gap: "4" })}>
+            {/* 캘린더 영역 */}
+            <div className={css({ flex: 1, minW: 0 })}>
+              {loading && (
                 <div
                   className={css({
                     textAlign: "center",
-                    py: "12",
+                    py: "8",
                     color: "gray.500",
                   })}
                 >
-                  일정이 없습니다
+                  로딩 중...
                 </div>
-              ) : (
-                <DailyTimeline events={events} onEventClick={setSelectedEvent} selectedDate={selectedDate} />
+              )}
+
+              {!loading && (
+                <div
+                  className={css({
+                    bg: "white",
+                    borderRadius: "xl",
+                    boxShadow: "sm",
+                    p: "4",
+                  })}
+                >
+                  {events.length === 0 ? (
+                    <div
+                      className={css({
+                        textAlign: "center",
+                        py: "12",
+                        color: "gray.500",
+                      })}
+                    >
+                      일정이 없습니다
+                    </div>
+                  ) : (
+                    <DailyTimeline events={events} onEventClick={setSelectedEvent} selectedDate={selectedDate} />
+                  )}
+                </div>
               )}
             </div>
-          )}
+
+            {/* 투두 사이드바 */}
+            <TodoInbox />
+          </div>
 
           <EventDetailModal
             event={selectedEvent}
