@@ -6,7 +6,7 @@
     "dev": "panda && next dev --turbopack",
     "build": "panda && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src",
     "prepare": "panda codegen"
   },
   "dependencies": {
