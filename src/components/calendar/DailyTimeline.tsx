@@ -22,7 +22,7 @@ interface DailyTimelineProps {
 
 export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimelineProps) => {
   const { settings } = useUserSettings();
-  const { todos, toggleTodo } = useTodos();
+  const { todos, toggleTodo, addTodo } = useTodos();
   const startHour = settings.dailyStartTime ?? 0;
   const endHour = settings.dailyEndTime ?? 24;
   const selectedDateStr = toDateString(selectedDate);
@@ -119,6 +119,12 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
                 selectedDate={selectedDateStr}
                 assignedTodos={todosBySlotStart.get(slotStart) ?? []}
                 onToggle={toggleTodo}
+                onAddTodo={(title) =>
+                  addTodo(title, {
+                    assignedDate: selectedDateStr,
+                    assignedHour: slotStart,
+                  })
+                }
               />
             ))}
 
