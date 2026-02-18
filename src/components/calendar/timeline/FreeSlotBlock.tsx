@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { css } from "../../../../styled-system/css";
 import { flex } from "../../../../styled-system/patterns";
@@ -8,6 +8,8 @@ import { BLOCK_MARGIN, formatHour } from "./timelineUtils";
 import { SlotTodoItem } from "./freeSlotBlock/SlotTodoItem";
 import { SlotTodoInput } from "./freeSlotBlock/SlotTodoInput";
 import type { Todo } from "@/types/todo";
+
+const INPUT_HEIGHT = 36;
 
 interface FreeSlotBlockProps {
   slotStart: number;
@@ -30,20 +32,10 @@ export const FreeSlotBlock = ({
 }: FreeSlotBlockProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const leaveTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const top = (slotStart - timelineStartHour) * 60 + BLOCK_MARGIN;
   const height = (slotEnd - slotStart) * 60 - BLOCK_MARGIN * 2;
   const showInput = isHovered || isInputFocused;
-
-  const handleMouseEnter = () => {
-    clearTimeout(leaveTimerRef.current);
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    leaveTimerRef.current = setTimeout(() => setIsHovered(false), 150);
-  };
 
   const droppableId = `freeslot_${selectedDate}_${slotStart}`;
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
@@ -51,28 +43,35 @@ export const FreeSlotBlock = ({
   return (
     <div
       ref={setNodeRef}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={css({
         position: "absolute",
         left: "4px",
         right: "4px",
+        bg: isOver ? "yellow.100" : "yellow.50",
+        borderRadius: "md",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
         zIndex: showInput ? 10 : 0,
+        transition: "background-color 0.15s, height 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+        border: isOver ? "1.5px dashed token(colors.yellow.400)" : "1.5px solid transparent",
       })}
-      style={{ top: `${top}px`, height: `${height}px` }}
+      style={{
+        top: `${top}px`,
+        height: `${showInput ? height + INPUT_HEIGHT : height}px`,
+      }}
     >
-      {/* 슬롯 본문 */}
+      {/* 슬롯 본문 - 고정 높이 유지 */}
       <div
         className={css({
-          height: "100%",
-          bg: isOver ? "yellow.100" : "yellow.50",
-          borderRadius: "md",
-          overflow: "hidden",
+          flexShrink: 0,
           display: "flex",
           flexDirection: "column",
-          transition: "background-color 0.15s",
-          border: isOver ? "1.5px dashed token(colors.yellow.400)" : "1.5px solid transparent",
+          overflow: "hidden",
         })}
+        style={{ height: `${height}px` }}
       >
         {/* 슬롯 시간 레이블 */}
         <div
@@ -99,30 +98,8 @@ export const FreeSlotBlock = ({
         )}
       </div>
 
-      {/* 슬롯 외부 하단 - hover/focus 시에만 표시 */}
-      {showInput && (
-        <div
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          className={css({
-            position: "absolute",
-            left: 0,
-            right: 0,
-            top: "100%",
-            bg: "white",
-            borderRadius: "md",
-            boxShadow: "sm",
-            border: "1px solid",
-            borderColor: "yellow.200",
-            mt: "1",
-          })}
-        >
-          <SlotTodoInput
-            onAdd={onAddTodo}
-            onFocusChange={setIsInputFocused}
-          />
-        </div>
-      )}
+      {/* 슬롯 하단 확장 영역 - overflow:hidden에 의해 height 애니메이션으로 나타남 */}
+      <SlotTodoInput onAdd={onAddTodo} onFocusChange={setIsInputFocused} />
     </div>
   );
 };
