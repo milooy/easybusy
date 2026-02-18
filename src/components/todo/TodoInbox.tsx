@@ -13,7 +13,8 @@ export function TodoInbox() {
   const [activeFolderId, setActiveFolderId] = useState("none");
 
   const filteredTodos = todos.filter((t) => t.folderId === activeFolderId);
-  const activeTodos = filteredTodos.filter((t) => !t.completed);
+  // 캘린더에 배정된 투두는 인박스에서 숨긴다
+  const activeTodos = filteredTodos.filter((t) => !t.completed && !t.assignedDate);
   const completedTodos = filteredTodos.filter((t) => t.completed);
 
   return (
