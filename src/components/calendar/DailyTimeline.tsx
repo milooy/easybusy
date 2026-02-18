@@ -2,8 +2,9 @@
 
 import { useMemo } from "react";
 import { GoogleEvent } from "@/lib/google-calendar";
-import { isToday } from "@/lib/date-utils";
+import { isToday, toDateString } from "@/lib/date-utils";
 import { useUserSettings } from "@/hooks/useUserSettings";
+import { useTodos } from "@/hooks/useTodos";
 import { css } from "../../../styled-system/css";
 import { getFreeSlots } from "./timeline/timelineUtils";
 import { useCurrentTime } from "./timeline/useCurrentTime";
@@ -21,8 +22,10 @@ interface DailyTimelineProps {
 
 export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimelineProps) => {
   const { settings } = useUserSettings();
+  const { todos, toggleTodo } = useTodos();
   const startHour = settings.dailyStartTime ?? 0;
   const endHour = settings.dailyEndTime ?? 24;
+  const selectedDateStr = toDateString(selectedDate);
 
   const hours = useMemo(
     () => Array.from({ length: endHour - startHour }, (_, i) => startHour + i),
@@ -37,6 +40,18 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [startHour, endHour, settings.dailyOffTimes, events]
   );
+
+  // 슬롯마다 인라인 filter를 반복하지 않도록 시작 시각(assignedHour) → 투두 목록으로 사전 그룹화
+  const todosBySlotStart = useMemo(() => {
+    const map = new Map<number, typeof todos>();
+    todos.forEach((t) => {
+      if (t.assignedDate === selectedDateStr && t.assignedHour !== undefined) {
+        const list = map.get(t.assignedHour) ?? [];
+        map.set(t.assignedHour, [...list, t]);
+      }
+    });
+    return map;
+  }, [todos, selectedDateStr]);
 
   const isActive = isToday(selectedDate);
   const { scrollContainerRef, currentTimeTop, currentTimeLabel } = useCurrentTime(
@@ -101,6 +116,9 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
                 slotStart={slotStart}
                 slotEnd={slotEnd}
                 timelineStartHour={startHour}
+                selectedDate={selectedDateStr}
+                assignedTodos={todosBySlotStart.get(slotStart) ?? []}
+                onToggle={toggleTodo}
               />
             ))}
 

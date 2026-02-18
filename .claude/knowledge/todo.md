@@ -34,7 +34,19 @@ interface Todo {
 - 훅: `useTodos()` (`src/hooks/useTodos.ts`)
   - `addTodo(title, options?)` / `updateTodo(id, changes)` / `deleteTodo(id)` / `toggleTodo(id)`
 
+## 인박스 표시 규칙
+
+- 활성 투두: `!completed && !assignedDate` — 캘린더에 배정된 투두는 인박스에서 숨긴다
+- 완료 투두: `completed` — assignedDate 여부와 무관하게 완료 섹션에 표시
+
 ## 앱 레이아웃에서 위치
 
 `/app/app/page.tsx`에서 캘린더 우측에 `<TodoInbox />` 사이드바(w: 280px) 배치.
 `PageLayout`의 maxWidth는 캘린더 연결 시 `"4xl"` 사용.
+
+## useLocalStorage 다중 인스턴스 주의
+
+`useTodos()`를 여러 컴포넌트에서 각각 호출하면 **독립적인 React 상태**를 가진다.
+한 컴포넌트에서 `updateTodo`를 호출해도 다른 컴포넌트는 즉시 반영되지 않는다.
+
+→ 해결: `useLocalStorage`에 `localstorage-sync` 커스텀 이벤트 동기화 내장됨 (`setValue` 시 dispatch, `useEffect`에서 listen).

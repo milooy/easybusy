@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { AuthGuard } from "@/components/AuthGuard";
 import { CalendarSection, DateNavigation, GoogleConnectButton } from "@/components/calendar";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -7,6 +9,8 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { TodoInbox } from "@/components/todo/TodoInbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
+import { useTodos } from "@/hooks/useTodos";
+import type { Todo } from "@/types/todo";
 import { css } from "../../../styled-system/css";
 import { flex } from "../../../styled-system/patterns";
 
@@ -22,8 +26,40 @@ function AppContent() {
   const { signOut } = useAuth();
   const { events, selectedDate, loading, error, isConnected, goToPrevDay, goToNextDay, goToToday } =
     useGoogleCalendar();
+  const { todos, updateTodo } = useTodos();
+  const [activeTodo, setActiveTodo] = useState<Todo | null>(null);
 
   const maxWidth = isConnected === null || !isConnected ? "md" : "4xl";
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const todo = todos.find((t) => t.id === event.active.id);
+    setActiveTodo(todo ?? null);
+  };
+
+  const handleDragCancel = () => setActiveTodo(null);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveTodo(null);
+
+    const { active, over } = event;
+    if (!over) return;
+
+    const overId = over.id as string;
+    if (!overId.startsWith("freeslot_")) return;
+
+    // "freeslot_2025-01-15_14.5" → assignedDate, assignedHour
+    const parts = overId.split("_");
+    const assignedDate = parts[1];
+    const assignedHour = parseFloat(parts[2]);
+
+    updateTodo(active.id as string, { assignedDate, assignedHour });
+  };
 
   return (
     <PageLayout maxWidth={maxWidth} showFooter={false}>
@@ -44,18 +80,45 @@ function AppContent() {
             />
           </div>
 
-          <div className={flex({ align: "flex-start", gap: "4" })}>
-            <CalendarSection
-              events={events}
-              selectedDate={selectedDate}
-              loading={loading}
-              error={error}
-            />
-            <TodoInbox />
-          </div>
+          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
+            <div className={flex({ align: "flex-start", gap: "4" })}>
+              <CalendarSection
+                events={events}
+                selectedDate={selectedDate}
+                loading={loading}
+                error={error}
+              />
+              <TodoInbox />
+            </div>
+            <DragOverlay>
+              {activeTodo && <TodoDragPreview todo={activeTodo} />}
+            </DragOverlay>
+          </DndContext>
         </>
       )}
     </PageLayout>
+  );
+}
+
+function TodoDragPreview({ todo }: { todo: Todo }) {
+  return (
+    <div
+      className={css({
+        bg: "white",
+        borderRadius: "md",
+        boxShadow: "lg",
+        px: "3",
+        py: "2",
+        fontSize: "sm",
+        color: "gray.800",
+        cursor: "grabbing",
+        opacity: 0.95,
+        maxW: "240px",
+        wordBreak: "break-word",
+      })}
+    >
+      {todo.title}
+    </div>
   );
 }
 

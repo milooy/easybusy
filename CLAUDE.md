@@ -50,6 +50,14 @@ Next.js App Router 기반 풀스택 앱. Google Calendar 연동 캘린더 서비
 - 클라이언트 컴포넌트에 `"use client"` 지시문 필수
 - path alias: `@/*` → `src/*`
 
+## Domain Knowledge
+
+프로젝트 도메인 지식 (구조, 계산 방식, 데이터 흐름):
+
+@.claude/knowledge/todo.md
+@.claude/knowledge/calendar-timeline.md
+@.claude/knowledge/dnd-pattern.md
+
 ## Environment Variables
 
 `.env.local` 필요 (env.example 참고):
