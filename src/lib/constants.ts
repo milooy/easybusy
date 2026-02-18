@@ -17,6 +17,7 @@ export const STORAGE_KEYS = {
   SELECTED_CALENDARS: "easybusy:selectedCalendars",
   USER_SETTINGS: "easybusy:userSettings",
   TODOS: "easybusy:todos",
+  DAILY_TIME_OVERRIDES: "easybusy:dailyTimeOverrides",
 } as const;
 
 /**
