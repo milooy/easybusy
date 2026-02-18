@@ -9,8 +9,11 @@ import { TodoItem } from "./TodoItem";
 import { TodoAddForm } from "./TodoAddForm";
 
 export function TodoInbox() {
-  const { todos, addTodo, updateTodo, deleteTodo, toggleTodo } = useTodos();
+  const { todos, addTodo, updateTodo, deleteTodo, toggleTodo, togglePlan } = useTodos();
   const [activeFolderId, setActiveFolderId] = useState("none");
+
+  const todayStr = new Date().toISOString().split("T")[0];
+  const handleTogglePlan = (id: string) => togglePlan(id, todayStr);
 
   const filteredTodos = todos.filter((t) => t.folderId === activeFolderId);
   // 캘린더에 배정된 투두는 인박스에서 숨긴다
@@ -83,6 +86,7 @@ export function TodoInbox() {
             onToggle={toggleTodo}
             onUpdate={updateTodo}
             onDelete={deleteTodo}
+            onTogglePlan={handleTogglePlan}
           />
         ))}
 
