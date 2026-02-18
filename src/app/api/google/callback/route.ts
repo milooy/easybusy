@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
 
     // 성공
     return NextResponse.redirect(
-      new URL("/?google_connected=true", request.url),
+      new URL("/app?google_connected=true", request.url),
     );
   } catch (error) {
     console.error("Google callback error:", error);
