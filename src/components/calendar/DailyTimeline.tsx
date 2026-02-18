@@ -13,6 +13,12 @@ interface DailyTimelineProps {
   selectedDate: Date;
 }
 
+const formatHour = (h: number) => {
+  const hh = Math.floor(h).toString().padStart(2, "0");
+  const mm = Math.round((h % 1) * 60).toString().padStart(2, "0");
+  return `${hh}:${mm}`;
+};
+
 /**
  * startHour~endHour 범위에서 휴식 시간과 이벤트가 없는 빈 슬롯 계산
  */
@@ -209,13 +215,22 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
                   key={`free-${index}`}
                   className={css({
                     position: "absolute",
-                    left: 0,
-                    right: 0,
+                    left: "4px",
+                    right: "4px",
                     bg: "yellow.50",
+                    borderRadius: "md",
+                    overflow: "hidden",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     zIndex: 0,
                   })}
                   style={{ top: `${top}px`, height: `${height}px` }}
-                />
+                >
+                  <span className={css({ fontSize: "xs", color: "yellow.700" })}>
+                    {formatHour(slotStart)} - {formatHour(slotEnd)}
+                  </span>
+                </div>
               );
             })}
 
