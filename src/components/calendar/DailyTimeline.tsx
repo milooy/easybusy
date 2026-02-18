@@ -2,8 +2,9 @@
 
 import { useMemo } from "react";
 import { GoogleEvent } from "@/lib/google-calendar";
-import { isToday } from "@/lib/date-utils";
+import { isToday, toDateString } from "@/lib/date-utils";
 import { useUserSettings } from "@/hooks/useUserSettings";
+import { useTodos } from "@/hooks/useTodos";
 import { css } from "../../../styled-system/css";
 import { getFreeSlots } from "./timeline/timelineUtils";
 import { useCurrentTime } from "./timeline/useCurrentTime";
@@ -21,8 +22,10 @@ interface DailyTimelineProps {
 
 export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimelineProps) => {
   const { settings } = useUserSettings();
+  const { todos, toggleTodo } = useTodos();
   const startHour = settings.dailyStartTime ?? 0;
   const endHour = settings.dailyEndTime ?? 24;
+  const selectedDateStr = toDateString(selectedDate);
 
   const hours = useMemo(
     () => Array.from({ length: endHour - startHour }, (_, i) => startHour + i),
@@ -101,6 +104,11 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
                 slotStart={slotStart}
                 slotEnd={slotEnd}
                 timelineStartHour={startHour}
+                selectedDate={selectedDateStr}
+                assignedTodos={todos.filter(
+                  (t) => t.assignedDate === selectedDateStr && t.assignedHour === slotStart
+                )}
+                onToggle={toggleTodo}
               />
             ))}
 
