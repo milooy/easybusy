@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AuthGuard } from "@/components/AuthGuard";
 import {
   DailyTimeline,
@@ -12,6 +13,7 @@ import {
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { GoogleEvent } from "@/lib/google-calendar";
 import { useAuth } from "@/contexts/AuthContext";
+import { Settings } from "lucide-react";
 import { css } from "../../../styled-system/css";
 import { flex } from "../../../styled-system/patterns";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -58,6 +60,25 @@ function Header({
           >
             캘린더 설정
           </button>
+        )}
+        {onToggleSettings && (
+          <Link
+            href="/app/settings"
+            className={css({
+              display: "flex",
+              alignItems: "center",
+              px: "2",
+              py: "1.5",
+              color: "gray.600",
+              borderRadius: "md",
+              border: "1px solid",
+              borderColor: "gray.300",
+              cursor: "pointer",
+              _hover: { bg: "gray.100" },
+            })}
+          >
+            <Settings size={16} />
+          </Link>
         )}
         <button
           onClick={onSignOut}
