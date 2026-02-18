@@ -10,26 +10,11 @@ import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { css } from "../../../styled-system/css";
 import { flex } from "../../../styled-system/patterns";
 
-function LoadingState({ onSignOut }: { onSignOut: () => void }) {
+export default function AppPage() {
   return (
-    <>
-      <AppHeader onSignOut={onSignOut} />
-      <div className={css({ display: "flex", alignItems: "center", justifyContent: "center", py: "20" })}>
-        <div className={css({ color: "gray.500" })}>로딩 중...</div>
-      </div>
-    </>
-  );
-}
-
-function GoogleConnectState({ onSignOut }: { onSignOut: () => void }) {
-  return (
-    <>
-      <AppHeader onSignOut={onSignOut} />
-      <div className={css({ textAlign: "center", mb: "8", pt: "8" })}>
-        <p className={css({ color: "gray.600" })}>구글 캘린더를 연결하여 일정을 확인하세요</p>
-      </div>
-      <GoogleConnectButton connectedEmails={[]} onDisconnect={() => {}} />
-    </>
+    <AuthGuard>
+      <AppContent />
+    </AuthGuard>
   );
 }
 
@@ -74,10 +59,25 @@ function AppContent() {
   );
 }
 
-export default function AppPage() {
+function LoadingState({ onSignOut }: { onSignOut: () => void }) {
   return (
-    <AuthGuard>
-      <AppContent />
-    </AuthGuard>
+    <>
+      <AppHeader onSignOut={onSignOut} />
+      <div className={css({ display: "flex", alignItems: "center", justifyContent: "center", py: "20" })}>
+        <div className={css({ color: "gray.500" })}>로딩 중...</div>
+      </div>
+    </>
+  );
+}
+
+function GoogleConnectState({ onSignOut }: { onSignOut: () => void }) {
+  return (
+    <>
+      <AppHeader onSignOut={onSignOut} />
+      <div className={css({ textAlign: "center", mb: "8", pt: "8" })}>
+        <p className={css({ color: "gray.600" })}>구글 캘린더를 연결하여 일정을 확인하세요</p>
+      </div>
+      <GoogleConnectButton connectedEmails={[]} onDisconnect={() => {}} />
+    </>
   );
 }
