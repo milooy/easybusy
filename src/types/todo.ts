@@ -29,4 +29,6 @@ export interface Todo {
   assignedDate?: string;
   /** 배정된 슬롯 시작 시간 (소수점 시간, e.g. 12.5 = 12:30) */
   assignedHour?: number;
+  /** Plan 영역에 추가된 날짜 (YYYY-MM-DD). assignedDate 없이 이 값만 있으면 Plan 상태 */
+  plannedDate?: string;
 }
