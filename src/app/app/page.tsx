@@ -199,7 +199,7 @@ function AppContent() {
                   일정이 없습니다
                 </div>
               ) : (
-                <DailyTimeline events={events} onEventClick={setSelectedEvent} />
+                <DailyTimeline events={events} onEventClick={setSelectedEvent} selectedDate={selectedDate} />
               )}
             </div>
           )}

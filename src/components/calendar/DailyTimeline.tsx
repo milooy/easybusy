@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { GoogleEvent, getEventTimes } from "@/lib/google-calendar";
-import { formatTime } from "@/lib/date-utils";
+import { formatTime, isToday } from "@/lib/date-utils";
 import { COLORS } from "@/lib/constants";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { css } from "../../../styled-system/css";
@@ -10,6 +10,7 @@ import { css } from "../../../styled-system/css";
 interface DailyTimelineProps {
   events: GoogleEvent[];
   onEventClick: (event: GoogleEvent) => void;
+  selectedDate: Date;
 }
 
 /**
@@ -28,7 +29,7 @@ const getEventPosition = (event: GoogleEvent, startHourOffset: number) => {
   };
 };
 
-export const DailyTimeline = ({ events, onEventClick }: DailyTimelineProps) => {
+export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimelineProps) => {
   const { settings } = useUserSettings();
   const startHour = settings.dailyStartTime ?? 0;
   const endHour = settings.dailyEndTime ?? 24;
@@ -40,6 +41,42 @@ export const DailyTimeline = ({ events, onEventClick }: DailyTimelineProps) => {
 
   const allDayEvents = events.filter((e) => !e.start.dateTime);
   const timedEvents = events.filter((e) => e.start.dateTime);
+
+  const showCurrentTime = isToday(selectedDate);
+
+  const [now, setNow] = useState(() => new Date());
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // 1분마다 현재 시간 갱신
+  useEffect(() => {
+    if (!showCurrentTime) return;
+
+    const interval = setInterval(() => {
+      setNow(new Date());
+    }, 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [showCurrentTime]);
+
+  // 마운트 시 현재 시간 위치로 자동 스크롤
+  useEffect(() => {
+    if (!showCurrentTime || !scrollContainerRef.current) return;
+
+    const currentHour = now.getHours() + now.getMinutes() / 60;
+    const scrollTop = (currentHour - startHour) * 60 - 120;
+    scrollContainerRef.current.scrollTop = Math.max(0, scrollTop);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const currentTimeTop = useMemo(() => {
+    const currentHour = now.getHours() + now.getMinutes() / 60;
+    if (currentHour < startHour || currentHour > endHour) return null;
+    return (currentHour - startHour) * 60;
+  }, [now, startHour, endHour]);
+
+  const currentTimeLabel = useMemo(() => {
+    return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+  }, [now]);
 
   return (
     <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
@@ -73,110 +110,172 @@ export const DailyTimeline = ({ events, onEventClick }: DailyTimelineProps) => {
       )}
 
       {/* 시간대별 타임라인 */}
-      <div className={css({ position: "relative", display: "flex" })}>
-        {/* 시간 레이블 */}
-        <div className={css({ width: "60px", flexShrink: 0 })}>
-          {hours.map((hour) => (
-            <div
-              key={hour}
-              className={css({
-                height: "60px",
-                fontSize: "xs",
-                color: "gray.500",
-                textAlign: "right",
-                pr: "2",
-                pt: "0.5",
-              })}
-            >
-              {hour.toString().padStart(2, "0")}:00
-            </div>
-          ))}
-        </div>
-
-        {/* 그리드 라인 + 이벤트 */}
-        <div className={css({ flex: 1, position: "relative", borderLeft: "1px solid", borderColor: "gray.200" })}>
-          {/* 시간 그리드 라인 */}
-          {hours.map((hour) => (
-            <div
-              key={hour}
-              className={css({
-                height: "60px",
-                borderBottom: "1px solid",
-                borderColor: "gray.100",
-              })}
-            />
-          ))}
-
-          {/* 휴식 블록 */}
-          {settings.dailyOffTimes.map((offTime, index) => {
-            const top = (offTime.startHour - startHour) * 60;
-            const height = (offTime.endHour - offTime.startHour) * 60;
-
-            return (
+      <div
+        ref={scrollContainerRef}
+        className={css({ maxHeight: "calc(100vh - 220px)", overflowY: "auto" })}
+      >
+        <div className={css({ position: "relative", display: "flex" })}>
+          {/* 시간 레이블 */}
+          <div className={css({ width: "60px", flexShrink: 0 })}>
+            {hours.map((hour) => (
               <div
-                key={`off-${index}`}
+                key={hour}
+                className={css({
+                  height: "60px",
+                  fontSize: "xs",
+                  color: "gray.500",
+                  textAlign: "right",
+                  pr: "2",
+                  pt: "0.5",
+                })}
+              >
+                {hour.toString().padStart(2, "0")}:00
+              </div>
+            ))}
+          </div>
+
+          {/* 그리드 라인 + 이벤트 */}
+          <div className={css({ flex: 1, position: "relative", borderLeft: "1px solid", borderColor: "gray.200" })}>
+            {/* 시간 그리드 라인 */}
+            {hours.map((hour) => (
+              <div
+                key={hour}
+                className={css({
+                  height: "60px",
+                  borderBottom: "1px solid",
+                  borderColor: "gray.100",
+                })}
+              />
+            ))}
+
+            {/* 휴식 블록 */}
+            {settings.dailyOffTimes.map((offTime, index) => {
+              const top = (offTime.startHour - startHour) * 60;
+              const height = (offTime.endHour - offTime.startHour) * 60;
+
+              return (
+                <div
+                  key={`off-${index}`}
+                  className={css({
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bg: "gray.100",
+                    borderRadius: "sm",
+                    zIndex: 0,
+                  })}
+                  style={{ top: `${top}px`, height: `${height}px` }}
+                >
+                  <span
+                    className={css({
+                      fontSize: "xs",
+                      color: "gray.400",
+                      fontWeight: "medium",
+                    })}
+                  >
+                    휴식
+                  </span>
+                </div>
+              );
+            })}
+
+            {/* 이벤트 블록 */}
+            {timedEvents.map((event) => {
+              const position = getEventPosition(event, startHour);
+              const { start, end } = getEventTimes(event);
+
+              return (
+                <button
+                  key={event.id}
+                  onClick={() => onEventClick(event)}
+                  className={css({
+                    position: "absolute",
+                    left: "4px",
+                    right: "4px",
+                    borderRadius: "md",
+                    px: "2",
+                    py: "1",
+                    overflow: "hidden",
+                    cursor: "pointer",
+                    transition: "opacity 0.2s",
+                    _hover: { opacity: 0.9 },
+                  })}
+                  style={{
+                    top: position.top,
+                    height: position.height,
+                    backgroundColor: event.calendarColor || COLORS.GOOGLE_CALENDAR_DEFAULT,
+                  }}
+                >
+                  <div className={css({ fontSize: "xs", fontWeight: "medium", color: "white", truncate: true })}>
+                    {event.summary || "(제목 없음)"}
+                  </div>
+                  <div className={css({ fontSize: "xs", color: "white", opacity: 0.8 })}>
+                    {formatTime(start)} - {formatTime(end)}
+                  </div>
+                </button>
+              );
+            })}
+
+            {/* 현재 시간 인디케이터 */}
+            {showCurrentTime && currentTimeTop !== null && (
+              <div
                 className={css({
                   position: "absolute",
                   left: 0,
                   right: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  bg: "gray.100",
-                  borderRadius: "sm",
-                  zIndex: 0,
+                  zIndex: 10,
+                  pointerEvents: "none",
                 })}
-                style={{ top: `${top}px`, height: `${height}px` }}
+                style={{ top: `${currentTimeTop}px` }}
               >
-                <span
+                {/* 빨간 가로선 */}
+                <div
                   className={css({
-                    fontSize: "xs",
-                    color: "gray.400",
-                    fontWeight: "medium",
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    height: "2px",
+                    bg: "red.500",
                   })}
-                >
-                  휴식
-                </span>
+                />
+                {/* 원형 마커 */}
+                <div
+                  className={css({
+                    position: "absolute",
+                    left: "-4px",
+                    top: "-3px",
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "full",
+                    bg: "red.500",
+                  })}
+                />
               </div>
-            );
-          })}
+            )}
+          </div>
 
-          {/* 이벤트 블록 */}
-          {timedEvents.map((event) => {
-            const position = getEventPosition(event, startHour);
-            const { start, end } = getEventTimes(event);
-
-            return (
-              <button
-                key={event.id}
-                onClick={() => onEventClick(event)}
-                className={css({
-                  position: "absolute",
-                  left: "4px",
-                  right: "4px",
-                  borderRadius: "md",
-                  px: "2",
-                  py: "1",
-                  overflow: "hidden",
-                  cursor: "pointer",
-                  transition: "opacity 0.2s",
-                  _hover: { opacity: 0.9 },
-                })}
-                style={{
-                  top: position.top,
-                  height: position.height,
-                  backgroundColor: event.calendarColor || COLORS.GOOGLE_CALENDAR_DEFAULT,
-                }}
-              >
-                <div className={css({ fontSize: "xs", fontWeight: "medium", color: "white", truncate: true })}>
-                  {event.summary || "(제목 없음)"}
-                </div>
-                <div className={css({ fontSize: "xs", color: "white", opacity: 0.8 })}>
-                  {formatTime(start)} - {formatTime(end)}
-                </div>
-              </button>
-            );
-          })}
+          {/* 현재 시간 라벨 (시간 레이블 영역에 표시) */}
+          {showCurrentTime && currentTimeTop !== null && (
+            <div
+              className={css({
+                position: "absolute",
+                left: 0,
+                width: "56px",
+                textAlign: "right",
+                fontSize: "xs",
+                fontWeight: "bold",
+                color: "red.500",
+                pointerEvents: "none",
+                zIndex: 10,
+              })}
+              style={{ top: `${currentTimeTop - 8}px` }}
+            >
+              {currentTimeLabel}
+            </div>
+          )}
         </div>
       </div>
     </div>
