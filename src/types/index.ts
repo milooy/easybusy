@@ -10,3 +10,6 @@ export type {
   GoogleToken,
   TokenPair,
 } from "./calendar";
+
+export type { Todo, TodoFolder } from "./todo";
+export { TODO_FOLDERS } from "./todo";

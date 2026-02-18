@@ -1,135 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { AuthGuard } from "@/components/AuthGuard";
-import {
-  DailyTimeline,
-  DateNavigation,
-  EventDetailModal,
-  GoogleConnectButton,
-} from "@/components/calendar";
-import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
-import { GoogleEvent } from "@/lib/google-calendar";
+import { CalendarSection, DateNavigation, GoogleConnectButton } from "@/components/calendar";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { TodoInbox } from "@/components/todo/TodoInbox";
 import { useAuth } from "@/contexts/AuthContext";
-import { Settings } from "lucide-react";
+import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { css } from "../../../styled-system/css";
 import { flex } from "../../../styled-system/patterns";
-import { PageLayout } from "@/components/layout/PageLayout";
 
-function Header({
-  showSettings,
-  onSignOut,
-}: {
-  showSettings?: boolean;
-  onSignOut: () => void;
-}) {
+export default function AppPage() {
   return (
-    <div
-      className={flex({
-        justify: "space-between",
-        align: "center",
-        mb: "6",
-      })}
-    >
-      <h1
-        className={css({
-          fontSize: "2xl",
-          fontWeight: "bold",
-          color: "gray.900",
-        })}
-      >
-        Easybusy
-      </h1>
-      <div className={css({ display: "flex", gap: "2" })}>
-        {showSettings && (
-          <Link
-            href="/app/settings"
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              px: "2",
-              py: "1.5",
-              color: "gray.600",
-              borderRadius: "md",
-              border: "1px solid",
-              borderColor: "gray.300",
-              cursor: "pointer",
-              _hover: { bg: "gray.100" },
-            })}
-          >
-            <Settings size={16} />
-          </Link>
-        )}
-        <button
-          onClick={onSignOut}
-          className={css({
-            px: "3",
-            py: "1.5",
-            fontSize: "sm",
-            color: "red.600",
-            borderRadius: "md",
-            border: "1px solid",
-            borderColor: "red.300",
-            cursor: "pointer",
-            _hover: { bg: "red.50" },
-          })}
-        >
-          로그아웃
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function LoadingState({ onSignOut }: { onSignOut: () => void }) {
-  return (
-    <>
-      <Header onSignOut={onSignOut} />
-      <div
-        className={css({
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          py: "20",
-        })}
-      >
-        <div className={css({ color: "gray.500" })}>로딩 중...</div>
-      </div>
-    </>
-  );
-}
-
-function GoogleConnectState({ onSignOut }: { onSignOut: () => void }) {
-  return (
-    <>
-      <Header onSignOut={onSignOut} />
-      <div className={css({ textAlign: "center", mb: "8", pt: "8" })}>
-        <p className={css({ color: "gray.600" })}>
-          구글 캘린더를 연결하여 일정을 확인하세요
-        </p>
-      </div>
-      <GoogleConnectButton connectedEmails={[]} onDisconnect={() => {}} />
-    </>
+    <AuthGuard>
+      <AppContent />
+    </AuthGuard>
   );
 }
 
 function AppContent() {
   const { signOut } = useAuth();
-  const {
-    events,
-    selectedDate,
-    loading,
-    error,
-    isConnected,
-    goToPrevDay,
-    goToNextDay,
-    goToToday,
-  } = useGoogleCalendar();
+  const { events, selectedDate, loading, error, isConnected, goToPrevDay, goToNextDay, goToToday } =
+    useGoogleCalendar();
 
-  const [selectedEvent, setSelectedEvent] = useState<GoogleEvent | null>(null);
-
-  const maxWidth = isConnected === null || !isConnected ? "md" : "3xl";
+  const maxWidth = isConnected === null || !isConnected ? "md" : "4xl";
 
   return (
     <PageLayout maxWidth={maxWidth} showFooter={false}>
@@ -139,24 +33,7 @@ function AppContent() {
 
       {isConnected && (
         <>
-          <Header
-            showSettings
-            onSignOut={signOut}
-          />
-
-          {error && (
-            <div
-              className={css({
-                p: "4",
-                mb: "4",
-                bg: "red.50",
-                color: "red.700",
-                borderRadius: "lg",
-              })}
-            >
-              {error}
-            </div>
-          )}
+          <AppHeader showSettings onSignOut={signOut} />
 
           <div className={css({ mb: "4" })}>
             <DateNavigation
@@ -167,57 +44,40 @@ function AppContent() {
             />
           </div>
 
-          {loading && (
-            <div
-              className={css({
-                textAlign: "center",
-                py: "8",
-                color: "gray.500",
-              })}
-            >
-              로딩 중...
-            </div>
-          )}
-
-          {!loading && (
-            <div
-              className={css({
-                bg: "white",
-                borderRadius: "xl",
-                boxShadow: "sm",
-                p: "4",
-              })}
-            >
-              {events.length === 0 ? (
-                <div
-                  className={css({
-                    textAlign: "center",
-                    py: "12",
-                    color: "gray.500",
-                  })}
-                >
-                  일정이 없습니다
-                </div>
-              ) : (
-                <DailyTimeline events={events} onEventClick={setSelectedEvent} selectedDate={selectedDate} />
-              )}
-            </div>
-          )}
-
-          <EventDetailModal
-            event={selectedEvent}
-            onClose={() => setSelectedEvent(null)}
-          />
+          <div className={flex({ align: "flex-start", gap: "4" })}>
+            <CalendarSection
+              events={events}
+              selectedDate={selectedDate}
+              loading={loading}
+              error={error}
+            />
+            <TodoInbox />
+          </div>
         </>
       )}
     </PageLayout>
   );
 }
 
-export default function AppPage() {
+function LoadingState({ onSignOut }: { onSignOut: () => void }) {
   return (
-    <AuthGuard>
-      <AppContent />
-    </AuthGuard>
+    <>
+      <AppHeader onSignOut={onSignOut} />
+      <div className={css({ display: "flex", alignItems: "center", justifyContent: "center", py: "20" })}>
+        <div className={css({ color: "gray.500" })}>로딩 중...</div>
+      </div>
+    </>
+  );
+}
+
+function GoogleConnectState({ onSignOut }: { onSignOut: () => void }) {
+  return (
+    <>
+      <AppHeader onSignOut={onSignOut} />
+      <div className={css({ textAlign: "center", mb: "8", pt: "8" })}>
+        <p className={css({ color: "gray.600" })}>구글 캘린더를 연결하여 일정을 확인하세요</p>
+      </div>
+      <GoogleConnectButton connectedEmails={[]} onDisconnect={() => {}} />
+    </>
   );
 }

@@ -16,6 +16,7 @@ export const COLORS = {
 export const STORAGE_KEYS = {
   SELECTED_CALENDARS: "easybusy:selectedCalendars",
   USER_SETTINGS: "easybusy:userSettings",
+  TODOS: "easybusy:todos",
 } as const;
 
 /**

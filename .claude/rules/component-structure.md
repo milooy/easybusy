@@ -32,3 +32,20 @@ timeline/
 ## 오케스트레이터 원칙
 - 오케스트레이터는 props 수신 → 데이터 분류 → 하위 컴포넌트 조합만 담당
 - 비즈니스 로직, 스타일 상세는 하위 파일로 위임
+
+## 파일 내 컴포넌트 순서
+
+메인(진입점) 컴포넌트를 파일 상단에, 보조 컴포넌트는 하단에 배치한다.
+
+```tsx
+// ✅ 올바른 순서
+export default function AppPage() { ... }   // 메인 - 상단
+
+function AppContent() { ... }               // 핵심 로직
+function LoadingState() { ... }             // 보조 - 하단
+function GoogleConnectState() { ... }       // 보조 - 하단
+
+// ❌ 잘못된 순서
+function LoadingState() { ... }             // 보조가 먼저
+function AppPage() { ... }                  // 메인이 하단
+```
