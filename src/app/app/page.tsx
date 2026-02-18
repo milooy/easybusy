@@ -7,6 +7,7 @@ import { CalendarSection, DateNavigation, GoogleConnectButton } from "@/componen
 import { AppHeader } from "@/components/layout/AppHeader";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { TodoInbox } from "@/components/todo/TodoInbox";
+import { PlanArea } from "@/components/plan/PlanArea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { useTodos } from "@/hooks/useTodos";
@@ -82,12 +83,15 @@ function AppContent() {
 
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
             <div className={flex({ align: "flex-start", gap: "4" })}>
-              <CalendarSection
-                events={events}
-                selectedDate={selectedDate}
-                loading={loading}
-                error={error}
-              />
+              <div className={css({ flex: 1, minW: 0 })}>
+                <CalendarSection
+                  events={events}
+                  selectedDate={selectedDate}
+                  loading={loading}
+                  error={error}
+                />
+                <PlanArea events={events} selectedDate={selectedDate} />
+              </div>
               <TodoInbox />
             </div>
             <DragOverlay>

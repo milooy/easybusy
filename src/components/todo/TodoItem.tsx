@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
-import { Trash2, Pencil, Check, X, GripVertical } from "lucide-react";
+import { Trash2, Pencil, Check, X, GripVertical, CalendarPlus } from "lucide-react";
 import { css } from "../../../styled-system/css";
 import { flex } from "../../../styled-system/patterns";
 import type { Todo } from "@/types/todo";
@@ -12,9 +12,10 @@ interface TodoItemProps {
   onToggle: (id: string) => void;
   onUpdate: (id: string, changes: Partial<Todo>) => void;
   onDelete: (id: string) => void;
+  onTogglePlan?: (id: string) => void;
 }
 
-export function TodoItem({ todo, onToggle, onUpdate, onDelete }: TodoItemProps) {
+export function TodoItem({ todo, onToggle, onUpdate, onDelete, onTogglePlan }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
 
@@ -138,6 +139,21 @@ export function TodoItem({ todo, onToggle, onUpdate, onDelete }: TodoItemProps) 
       {/* 액션 버튼 (수정 모드가 아닐 때만) */}
       {!isEditing && (
         <div className={flex({ align: "center", gap: "1", flexShrink: 0 })}>
+          {onTogglePlan && !todo.completed && (
+            <button
+              onClick={() => onTogglePlan(todo.id)}
+              title={todo.plannedDate ? "Plan에서 제거" : "오늘 Plan에 추가"}
+              className={css({
+                p: "1",
+                color: todo.plannedDate ? "blue.500" : "gray.400",
+                borderRadius: "sm",
+                cursor: "pointer",
+                _hover: { color: "blue.600", bg: "blue.50" },
+              })}
+            >
+              <CalendarPlus size={13} />
+            </button>
+          )}
           <button
             onClick={() => setIsEditing(true)}
             className={css({

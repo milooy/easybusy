@@ -65,5 +65,22 @@ export function useTodos() {
     [setTodos]
   );
 
-  return { todos, addTodo, updateTodo, deleteTodo, toggleTodo };
+  const togglePlan = useCallback(
+    (id: string, todayStr: string) => {
+      setTodos((prev) =>
+        prev.map((todo) => {
+          if (todo.id !== id) return todo;
+          if (todo.plannedDate) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { plannedDate, ...rest } = todo;
+            return rest;
+          }
+          return { ...todo, plannedDate: todayStr };
+        })
+      );
+    },
+    [setTodos]
+  );
+
+  return { todos, addTodo, updateTodo, deleteTodo, toggleTodo, togglePlan };
 }
