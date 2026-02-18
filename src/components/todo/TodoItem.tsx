@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2, Pencil, Check, X } from "lucide-react";
+import { useDraggable } from "@dnd-kit/core";
+import { Trash2, Pencil, Check, X, GripVertical } from "lucide-react";
 import { css } from "../../../styled-system/css";
 import { flex } from "../../../styled-system/patterns";
 import type { Todo } from "@/types/todo";
@@ -17,6 +18,11 @@ export function TodoItem({ todo, onToggle, onUpdate, onDelete }: TodoItemProps) 
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
 
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: todo.id,
+    disabled: todo.completed,
+  });
+
   const handleEditSubmit = () => {
     const trimmed = editTitle.trim();
     if (!trimmed) return;
@@ -31,6 +37,8 @@ export function TodoItem({ todo, onToggle, onUpdate, onDelete }: TodoItemProps) 
 
   return (
     <div
+      ref={setNodeRef}
+      style={{ opacity: isDragging ? 0.4 : 1 }}
       className={flex({
         align: "center",
         gap: "2",
@@ -40,6 +48,22 @@ export function TodoItem({ todo, onToggle, onUpdate, onDelete }: TodoItemProps) 
         _hover: { bg: "gray.50" },
       })}
     >
+      {/* 드래그 핸들 */}
+      {!todo.completed && (
+        <button
+          {...listeners}
+          {...attributes}
+          className={css({
+            color: "gray.300",
+            cursor: "grab",
+            flexShrink: 0,
+            _hover: { color: "gray.500" },
+            _active: { cursor: "grabbing" },
+          })}
+        >
+          <GripVertical size={14} />
+        </button>
+      )}
       {/* 체크박스 */}
       <button
         onClick={() => onToggle(todo.id)}
