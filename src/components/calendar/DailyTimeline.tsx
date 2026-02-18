@@ -1,18 +1,25 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef, useCallback } from "react";
 import { GoogleEvent } from "@/lib/google-calendar";
 import { isToday, toDateString } from "@/lib/date-utils";
 import { useUserSettings } from "@/hooks/useUserSettings";
+import { useDailyTimeOverrides } from "@/hooks/useDailyTimeOverrides";
 import { useTodos } from "@/hooks/useTodos";
 import { css } from "../../../styled-system/css";
 import { getFreeSlots } from "./timeline/timelineUtils";
 import { useCurrentTime } from "./timeline/useCurrentTime";
+import { useTimeRangeResize } from "./timeline/useTimeRangeResize";
 import { AllDayEvents } from "./timeline/AllDayEvents";
 import { FreeSlotBlock } from "./timeline/FreeSlotBlock";
 import { OffTimeBlock } from "./timeline/OffTimeBlock";
 import { TimedEventBlock } from "./timeline/TimedEventBlock";
 import { CurrentTimeIndicator } from "./timeline/CurrentTimeIndicator";
+import { InactiveTimeBlock } from "./timeline/InactiveTimeBlock";
+
+const TIMELINE_START = 0;
+const TIMELINE_END = 24;
+const ALL_HOURS = Array.from({ length: TIMELINE_END - TIMELINE_START }, (_, i) => i);
 
 interface DailyTimelineProps {
   events: GoogleEvent[];
@@ -22,15 +29,14 @@ interface DailyTimelineProps {
 
 export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimelineProps) => {
   const { settings } = useUserSettings();
+  const { getOverride, setOverride } = useDailyTimeOverrides();
   const { todos, toggleTodo, addTodo } = useTodos();
-  const startHour = settings.dailyStartTime ?? 0;
-  const endHour = settings.dailyEndTime ?? 24;
   const selectedDateStr = toDateString(selectedDate);
 
-  const hours = useMemo(
-    () => Array.from({ length: endHour - startHour }, (_, i) => startHour + i),
-    [startHour, endHour]
-  );
+  // 전역 기본값 (settings)에 날짜별 override를 적용한 실제 시작/종료 시간
+  const override = getOverride(selectedDateStr);
+  const startHour = override?.startTime ?? settings.dailyStartTime ?? 0;
+  const endHour = override?.endTime ?? settings.dailyEndTime ?? 24;
 
   const allDayEvents = events.filter((e) => !e.start.dateTime);
   const timedEvents = events.filter((e) => e.start.dateTime);
@@ -41,7 +47,6 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
     [startHour, endHour, settings.dailyOffTimes, events]
   );
 
-  // 슬롯마다 인라인 filter를 반복하지 않도록 시작 시각(assignedHour) → 투두 목록으로 사전 그룹화
   const todosBySlotStart = useMemo(() => {
     const map = new Map<number, typeof todos>();
     todos.forEach((t) => {
@@ -55,10 +60,30 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
 
   const isActive = isToday(selectedDate);
   const { scrollContainerRef, currentTimeTop, currentTimeLabel } = useCurrentTime(
-    startHour,
-    endHour,
+    TIMELINE_START,
+    TIMELINE_END,
     isActive
   );
+
+  // 그리드 영역 ref (드래그 좌표 계산 기준)
+  const gridContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleStartHourChange = useCallback(
+    (hour: number) => setOverride(selectedDateStr, { startTime: hour }),
+    [setOverride, selectedDateStr]
+  );
+  const handleEndHourChange = useCallback(
+    (hour: number) => setOverride(selectedDateStr, { endTime: hour }),
+    [setOverride, selectedDateStr]
+  );
+
+  const { startHandleProps, endHandleProps } = useTimeRangeResize({
+    currentStartHour: startHour,
+    currentEndHour: endHour,
+    onStartHourChange: handleStartHourChange,
+    onEndHourChange: handleEndHourChange,
+    gridContainerRef,
+  });
 
   return (
     <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
@@ -70,9 +95,9 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
         className={css({ maxHeight: "calc(100vh - 220px)", overflowY: "auto" })}
       >
         <div className={css({ position: "relative", display: "flex" })}>
-          {/* 시간 레이블 */}
+          {/* 시간 레이블 (0~24 전체) */}
           <div className={css({ width: "60px", flexShrink: 0 })}>
-            {hours.map((hour) => (
+            {ALL_HOURS.map((hour) => (
               <div
                 key={hour}
                 className={css({
@@ -89,8 +114,9 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
             ))}
           </div>
 
-          {/* 그리드 라인 + 이벤트 */}
+          {/* 그리드 라인 + 이벤트 (0~24 전체) */}
           <div
+            ref={gridContainerRef}
             className={css({
               flex: 1,
               position: "relative",
@@ -99,7 +125,7 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
             })}
           >
             {/* 시간 그리드 라인 */}
-            {hours.map((hour) => (
+            {ALL_HOURS.map((hour) => (
               <div
                 key={hour}
                 className={css({
@@ -110,12 +136,35 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
               />
             ))}
 
+            {/* startTime 이전 비활성 영역 (핸들 위치: bottom) */}
+            {startHour > TIMELINE_START && (
+              <InactiveTimeBlock
+                startHour={TIMELINE_START}
+                endHour={startHour}
+                timelineStartHour={TIMELINE_START}
+                handlePosition="bottom"
+                onHandleMouseDown={startHandleProps.onMouseDown}
+              />
+            )}
+
+            {/* endTime 이후 비활성 영역 (핸들 위치: top) */}
+            {endHour < TIMELINE_END && (
+              <InactiveTimeBlock
+                startHour={endHour}
+                endHour={TIMELINE_END}
+                timelineStartHour={TIMELINE_START}
+                handlePosition="top"
+                onHandleMouseDown={endHandleProps.onMouseDown}
+              />
+            )}
+
+            {/* 활성 시간대 자유 슬롯 */}
             {freeSlots.map(([slotStart, slotEnd], index) => (
               <FreeSlotBlock
                 key={`free-${index}`}
                 slotStart={slotStart}
                 slotEnd={slotEnd}
-                timelineStartHour={startHour}
+                timelineStartHour={TIMELINE_START}
                 selectedDate={selectedDateStr}
                 assignedTodos={todosBySlotStart.get(slotStart) ?? []}
                 onToggle={toggleTodo}
@@ -128,19 +177,21 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
               />
             ))}
 
+            {/* 휴식 시간 블록 */}
             {settings.dailyOffTimes.map((offTime, index) => (
               <OffTimeBlock
                 key={`off-${index}`}
                 offTime={offTime}
-                timelineStartHour={startHour}
+                timelineStartHour={TIMELINE_START}
               />
             ))}
 
+            {/* 구글 캘린더 이벤트 (전체 24시간 범위) */}
             {timedEvents.map((event) => (
               <TimedEventBlock
                 key={event.id}
                 event={event}
-                timelineStartHour={startHour}
+                timelineStartHour={TIMELINE_START}
                 onClick={onEventClick}
               />
             ))}
@@ -150,7 +201,7 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
             )}
           </div>
 
-          {/* 현재 시간 라벨 (시간 레이블 영역에 표시) */}
+          {/* 현재 시간 라벨 */}
           {isActive && currentTimeTop !== null && (
             <div
               className={css({
