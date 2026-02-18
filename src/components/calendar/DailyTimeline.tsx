@@ -1,8 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import { GoogleEvent, getEventTimes } from "@/lib/google-calendar";
 import { formatTime } from "@/lib/date-utils";
 import { COLORS } from "@/lib/constants";
+import { useUserSettings } from "@/hooks/useUserSettings";
 import { css } from "../../../styled-system/css";
 
 interface DailyTimelineProps {
@@ -10,24 +12,32 @@ interface DailyTimelineProps {
   onEventClick: (event: GoogleEvent) => void;
 }
 
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
-
 /**
- * 이벤트의 타임라인 위치 계산 (모듈 스코프로 분리하여 리렌더링 최적화)
+ * 이벤트의 타임라인 위치 계산
+ * @param startHourOffset 타임라인 시작 시간 (설정에 따른 오프셋)
  */
-const getEventPosition = (event: GoogleEvent) => {
+const getEventPosition = (event: GoogleEvent, startHourOffset: number) => {
   const { start, end } = getEventTimes(event);
   const startHour = start.getHours() + start.getMinutes() / 60;
   const endHour = end.getHours() + end.getMinutes() / 60;
   const duration = endHour - startHour;
 
   return {
-    top: `${startHour * 60}px`,
+    top: `${(startHour - startHourOffset) * 60}px`,
     height: `${Math.max(duration * 60, 24)}px`,
   };
 };
 
 export const DailyTimeline = ({ events, onEventClick }: DailyTimelineProps) => {
+  const { settings } = useUserSettings();
+  const startHour = settings.dailyStartTime ?? 0;
+  const endHour = settings.dailyEndTime ?? 24;
+
+  const hours = useMemo(
+    () => Array.from({ length: endHour - startHour }, (_, i) => startHour + i),
+    [startHour, endHour]
+  );
+
   const allDayEvents = events.filter((e) => !e.start.dateTime);
   const timedEvents = events.filter((e) => e.start.dateTime);
 
@@ -66,7 +76,7 @@ export const DailyTimeline = ({ events, onEventClick }: DailyTimelineProps) => {
       <div className={css({ position: "relative", display: "flex" })}>
         {/* 시간 레이블 */}
         <div className={css({ width: "60px", flexShrink: 0 })}>
-          {HOURS.map((hour) => (
+          {hours.map((hour) => (
             <div
               key={hour}
               className={css({
@@ -86,7 +96,7 @@ export const DailyTimeline = ({ events, onEventClick }: DailyTimelineProps) => {
         {/* 그리드 라인 + 이벤트 */}
         <div className={css({ flex: 1, position: "relative", borderLeft: "1px solid", borderColor: "gray.200" })}>
           {/* 시간 그리드 라인 */}
-          {HOURS.map((hour) => (
+          {hours.map((hour) => (
             <div
               key={hour}
               className={css({
@@ -97,9 +107,43 @@ export const DailyTimeline = ({ events, onEventClick }: DailyTimelineProps) => {
             />
           ))}
 
+          {/* 휴식 블록 */}
+          {settings.dailyOffTimes.map((offTime, index) => {
+            const top = (offTime.startHour - startHour) * 60;
+            const height = (offTime.endHour - offTime.startHour) * 60;
+
+            return (
+              <div
+                key={`off-${index}`}
+                className={css({
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bg: "gray.100",
+                  borderRadius: "sm",
+                  zIndex: 0,
+                })}
+                style={{ top: `${top}px`, height: `${height}px` }}
+              >
+                <span
+                  className={css({
+                    fontSize: "xs",
+                    color: "gray.400",
+                    fontWeight: "medium",
+                  })}
+                >
+                  휴식
+                </span>
+              </div>
+            );
+          })}
+
           {/* 이벤트 블록 */}
           {timedEvents.map((event) => {
-            const position = getEventPosition(event);
+            const position = getEventPosition(event, startHour);
             const { start, end } = getEventTimes(event);
 
             return (

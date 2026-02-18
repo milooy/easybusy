@@ -1,26 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AuthGuard } from "@/components/AuthGuard";
 import {
   DailyTimeline,
   DateNavigation,
   EventDetailModal,
-  CalendarSelector,
   GoogleConnectButton,
 } from "@/components/calendar";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { GoogleEvent } from "@/lib/google-calendar";
 import { useAuth } from "@/contexts/AuthContext";
+import { Settings } from "lucide-react";
 import { css } from "../../../styled-system/css";
 import { flex } from "../../../styled-system/patterns";
 import { PageLayout } from "@/components/layout/PageLayout";
 
 function Header({
-  onToggleSettings,
+  showSettings,
   onSignOut,
 }: {
-  onToggleSettings?: () => void;
+  showSettings?: boolean;
   onSignOut: () => void;
 }) {
   return (
@@ -41,13 +42,14 @@ function Header({
         Easybusy
       </h1>
       <div className={css({ display: "flex", gap: "2" })}>
-        {onToggleSettings && (
-          <button
-            onClick={onToggleSettings}
+        {showSettings && (
+          <Link
+            href="/app/settings"
             className={css({
-              px: "3",
+              display: "flex",
+              alignItems: "center",
+              px: "2",
               py: "1.5",
-              fontSize: "sm",
               color: "gray.600",
               borderRadius: "md",
               border: "1px solid",
@@ -56,8 +58,8 @@ function Header({
               _hover: { bg: "gray.100" },
             })}
           >
-            캘린더 설정
-          </button>
+            <Settings size={16} />
+          </Link>
         )}
         <button
           onClick={onSignOut}
@@ -115,22 +117,17 @@ function GoogleConnectState({ onSignOut }: { onSignOut: () => void }) {
 function AppContent() {
   const { signOut } = useAuth();
   const {
-    calendars,
-    selectedCalendarIds,
     events,
     selectedDate,
     loading,
     error,
     isConnected,
-    connectedEmails,
-    toggleCalendar,
     goToPrevDay,
     goToNextDay,
     goToToday,
   } = useGoogleCalendar();
 
   const [selectedEvent, setSelectedEvent] = useState<GoogleEvent | null>(null);
-  const [showCalendarSelector, setShowCalendarSelector] = useState(false);
 
   const maxWidth = isConnected === null || !isConnected ? "md" : "3xl";
 
@@ -143,7 +140,7 @@ function AppContent() {
       {isConnected && (
         <>
           <Header
-            onToggleSettings={() => setShowCalendarSelector(!showCalendarSelector)}
+            showSettings
             onSignOut={signOut}
           />
 
@@ -158,27 +155,6 @@ function AppContent() {
               })}
             >
               {error}
-            </div>
-          )}
-
-          {showCalendarSelector && (
-            <div
-              className={css({
-                mb: "4",
-                display: "flex",
-                flexDirection: "column",
-                gap: "4",
-              })}
-            >
-              <CalendarSelector
-                calendars={calendars}
-                selectedIds={selectedCalendarIds}
-                onToggle={toggleCalendar}
-              />
-              <GoogleConnectButton
-                connectedEmails={connectedEmails}
-                onDisconnect={() => {}}
-              />
             </div>
           )}
 
