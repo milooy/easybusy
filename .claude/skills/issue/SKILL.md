@@ -52,13 +52,17 @@ argument-hint: "[issue-number]"
 각 서브태스크마다:
 1. `.workplan-ISSUE_NUMBER.md`에서 현재 태스크를 `🔄 진행중`으로 표시하고, TodoWrite에서도 `in_progress`로 변경한다.
 2. 구현을 진행한다.
-3. 구현이 끝나면 `.workplan-ISSUE_NUMBER.md`에서 해당 태스크를 `- [x]`로 체크하고 `git add`로 관련 파일을 스테이징한다.
-4. Conventional Commit 형식으로 커밋한다:
+3. 구현이 끝나면 커밋 전 **컴포넌트 구조 규칙을 반드시 체크**한다:
+   - 상태 로직(useState, useEffect 등) + UI가 같은 파일에 혼재하는가?
+   - 파일이 200줄을 초과하는가?
+   - 위 조건 중 하나라도 해당하면 하위 디렉토리로 분리한다 (`.claude/rules/component-structure.md` 참고)
+4. `.workplan-ISSUE_NUMBER.md`에서 해당 태스크를 `- [x]`로 체크하고 `git add`로 관련 파일을 스테이징한다.
+5. Conventional Commit 형식으로 커밋한다:
    - 커밋 메시지는 한국어로 작성
    - 이모지 + 타입: feat, fix, refactor, docs, chore, test 등
    - 예시: `✨ feat(calendar): 데일리 캘린더 시작/종료 시간 설정 기능 추가`
-5. TodoWrite에서 해당 태스크를 `completed`로 변경한다.
-6. 다음 서브태스크로 이동한다.
+6. TodoWrite에서 해당 태스크를 `completed`로 변경한다.
+7. 다음 서브태스크로 이동한다.
 
 **중요**: 각 커밋은 빌드가 깨지지 않는 상태를 유지해야 한다.
 
@@ -84,6 +88,7 @@ argument-hint: "[issue-number]"
    - 타입 정의가 적절한지
 3. 개선이 필요한 부분이 있으면 리팩토링을 진행하고, `♻️ refactor: ...` 형식으로 커밋한다.
 4. 리팩토링 후 `npm run build`와 `npm run lint`로 빌드/린트가 정상인지 재확인한다.
+5. 완료 후 `/wrapup`으로 이번 세션에서 배운 내용을 정리한다.
 
 ## Step 7: PR 생성 및 배포 URL 제공
 
