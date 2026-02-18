@@ -41,6 +41,18 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
     [startHour, endHour, settings.dailyOffTimes, events]
   );
 
+  // 슬롯마다 인라인 filter를 반복하지 않도록 시작 시각(assignedHour) → 투두 목록으로 사전 그룹화
+  const todosBySlotStart = useMemo(() => {
+    const map = new Map<number, typeof todos>();
+    todos.forEach((t) => {
+      if (t.assignedDate === selectedDateStr && t.assignedHour !== undefined) {
+        const list = map.get(t.assignedHour) ?? [];
+        map.set(t.assignedHour, [...list, t]);
+      }
+    });
+    return map;
+  }, [todos, selectedDateStr]);
+
   const isActive = isToday(selectedDate);
   const { scrollContainerRef, currentTimeTop, currentTimeLabel } = useCurrentTime(
     startHour,
@@ -105,9 +117,7 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
                 slotEnd={slotEnd}
                 timelineStartHour={startHour}
                 selectedDate={selectedDateStr}
-                assignedTodos={todos.filter(
-                  (t) => t.assignedDate === selectedDateStr && t.assignedHour === slotStart
-                )}
+                assignedTodos={todosBySlotStart.get(slotStart) ?? []}
                 onToggle={toggleTodo}
               />
             ))}

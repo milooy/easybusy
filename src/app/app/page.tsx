@@ -42,6 +42,8 @@ function AppContent() {
     setActiveTodo(todo ?? null);
   };
 
+  const handleDragCancel = () => setActiveTodo(null);
+
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveTodo(null);
 
@@ -78,7 +80,7 @@ function AppContent() {
             />
           </div>
 
-          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
             <div className={flex({ align: "flex-start", gap: "4" })}>
               <CalendarSection
                 events={events}
