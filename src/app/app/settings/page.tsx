@@ -24,6 +24,42 @@ function formatHour(hour: number): string {
   return `${hour.toString().padStart(2, "0")}:00`;
 }
 
+const selectStyle = css({
+  w: "full",
+  p: "2.5",
+  borderRadius: "md",
+  border: "1px solid",
+  borderColor: "gray.300",
+  fontSize: "sm",
+  color: "gray.900",
+  cursor: "pointer",
+  _focus: {
+    outline: "none",
+    borderColor: "blue.500",
+    ring: "1px",
+    ringColor: "blue.500",
+  },
+});
+
+const compactSelectStyle = css({
+  flex: "1",
+  p: "2",
+  borderRadius: "md",
+  border: "1px solid",
+  borderColor: "gray.300",
+  fontSize: "sm",
+  color: "gray.900",
+  cursor: "pointer",
+});
+
+const labelStyle = css({
+  display: "block",
+  fontSize: "sm",
+  fontWeight: "medium",
+  color: "gray.700",
+  mb: "2",
+});
+
 function SettingsContent() {
   const router = useRouter();
   const { settings, setSettings } = useUserSettings();
@@ -129,17 +165,7 @@ function SettingsContent() {
       >
         {/* 시작 시간 */}
         <div>
-          <label
-            className={css({
-              display: "block",
-              fontSize: "sm",
-              fontWeight: "medium",
-              color: "gray.700",
-              mb: "2",
-            })}
-          >
-            하루 시작 시간
-          </label>
+          <label className={labelStyle}>하루 시작 시간</label>
           <select
             value={draft.dailyStartTime ?? ""}
             onChange={(e) =>
@@ -149,22 +175,7 @@ function SettingsContent() {
                   e.target.value === "" ? null : Number(e.target.value),
               }))
             }
-            className={css({
-              w: "full",
-              p: "2.5",
-              borderRadius: "md",
-              border: "1px solid",
-              borderColor: "gray.300",
-              fontSize: "sm",
-              color: "gray.900",
-              cursor: "pointer",
-              _focus: {
-                outline: "none",
-                borderColor: "blue.500",
-                ring: "1px",
-                ringColor: "blue.500",
-              },
-            })}
+            className={selectStyle}
           >
             <option value="">설정 안함 (0:00)</option>
             {HOUR_OPTIONS.filter((h) => h < 24).map((h) => (
@@ -177,17 +188,7 @@ function SettingsContent() {
 
         {/* 종료 시간 */}
         <div>
-          <label
-            className={css({
-              display: "block",
-              fontSize: "sm",
-              fontWeight: "medium",
-              color: "gray.700",
-              mb: "2",
-            })}
-          >
-            하루 종료 시간
-          </label>
+          <label className={labelStyle}>하루 종료 시간</label>
           <select
             value={draft.dailyEndTime ?? ""}
             onChange={(e) =>
@@ -197,22 +198,7 @@ function SettingsContent() {
                   e.target.value === "" ? null : Number(e.target.value),
               }))
             }
-            className={css({
-              w: "full",
-              p: "2.5",
-              borderRadius: "md",
-              border: "1px solid",
-              borderColor: "gray.300",
-              fontSize: "sm",
-              color: "gray.900",
-              cursor: "pointer",
-              _focus: {
-                outline: "none",
-                borderColor: "blue.500",
-                ring: "1px",
-                ringColor: "blue.500",
-              },
-            })}
+            className={selectStyle}
           >
             <option value="">설정 안함 (24:00)</option>
             {HOUR_OPTIONS.filter((h) => h >= 1).map((h) => (
@@ -226,13 +212,7 @@ function SettingsContent() {
         {/* 쉬는 시간 */}
         <div>
           <div className={flex({ justify: "space-between", align: "center", mb: "2" })}>
-            <label
-              className={css({
-                fontSize: "sm",
-                fontWeight: "medium",
-                color: "gray.700",
-              })}
-            >
+            <label className={css({ fontSize: "sm", fontWeight: "medium", color: "gray.700" })}>
               쉬는 시간
             </label>
             <button
@@ -272,16 +252,7 @@ function SettingsContent() {
                   onChange={(e) =>
                     handleOffTimeChange(index, "startHour", Number(e.target.value))
                   }
-                  className={css({
-                    flex: "1",
-                    p: "2",
-                    borderRadius: "md",
-                    border: "1px solid",
-                    borderColor: "gray.300",
-                    fontSize: "sm",
-                    color: "gray.900",
-                    cursor: "pointer",
-                  })}
+                  className={compactSelectStyle}
                 >
                   {HOUR_OPTIONS.filter((h) => h < 24).map((h) => (
                     <option key={h} value={h}>
@@ -295,16 +266,7 @@ function SettingsContent() {
                   onChange={(e) =>
                     handleOffTimeChange(index, "endHour", Number(e.target.value))
                   }
-                  className={css({
-                    flex: "1",
-                    p: "2",
-                    borderRadius: "md",
-                    border: "1px solid",
-                    borderColor: "gray.300",
-                    fontSize: "sm",
-                    color: "gray.900",
-                    cursor: "pointer",
-                  })}
+                  className={compactSelectStyle}
                 >
                   {HOUR_OPTIONS.filter((h) => h >= 1).map((h) => (
                     <option key={h} value={h}>
