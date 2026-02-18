@@ -60,7 +60,7 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
   }, [todos, selectedDateStr]);
 
   const isActive = isToday(selectedDate);
-  const { scrollContainerRef, currentTimeTop, currentTimeLabel } = useCurrentTime(
+  const { currentTimeRef, currentTimeTop, currentTimeLabel } = useCurrentTime(
     TIMELINE_START,
     TIMELINE_END,
     isActive
@@ -91,10 +91,7 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
       <AllDayEvents events={allDayEvents} onEventClick={onEventClick} />
 
       {/* 시간대별 타임라인 */}
-      <div
-        ref={scrollContainerRef}
-        className={css({ maxHeight: "calc(100vh - 220px)", overflowY: "auto" })}
-      >
+      <div>
         <div className={css({ position: "relative", display: "flex" })}>
           {/* 시간 레이블 (0~24 전체) */}
           <div className={css({ width: "60px", flexShrink: 0 })}>
@@ -210,7 +207,7 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
             ))}
 
             {isActive && currentTimeTop !== null && (
-              <CurrentTimeIndicator top={currentTimeTop} />
+              <CurrentTimeIndicator ref={currentTimeRef} top={currentTimeTop} />
             )}
           </div>
 
