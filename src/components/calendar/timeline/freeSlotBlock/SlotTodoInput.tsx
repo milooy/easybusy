@@ -7,9 +7,10 @@ import { flex } from "../../../../../styled-system/patterns";
 
 interface SlotTodoInputProps {
   onAdd: (title: string) => void;
+  onFocusChange?: (focused: boolean) => void;
 }
 
-export function SlotTodoInput({ onAdd }: SlotTodoInputProps) {
+export function SlotTodoInput({ onAdd, onFocusChange }: SlotTodoInputProps) {
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -26,9 +27,7 @@ export function SlotTodoInput({ onAdd }: SlotTodoInputProps) {
         align: "center",
         gap: "1",
         px: "2",
-        pb: "1.5",
-        mt: "auto",
-        flexShrink: 0,
+        py: "1.5",
       })}
     >
       <input
@@ -36,6 +35,8 @@ export function SlotTodoInput({ onAdd }: SlotTodoInputProps) {
         type="text"
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
+        onFocus={() => onFocusChange?.(true)}
+        onBlur={() => onFocusChange?.(false)}
         onKeyDown={(e) => {
           if (e.key === "Enter") handleSubmit();
           if (e.key === "Escape") {
