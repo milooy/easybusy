@@ -1,6 +1,9 @@
 "use client";
 
 import { GoogleEvent, getEventTimes } from "@/lib/google-calendar";
+import { formatDateTime } from "@/lib/date-utils";
+import { sanitizeHtml } from "@/lib/sanitize";
+import { COLORS } from "@/lib/constants";
 import { css } from "../../../styled-system/css";
 import { flex } from "../../../styled-system/patterns";
 
@@ -13,23 +16,6 @@ export const EventDetailModal = ({ event, onClose }: EventDetailModalProps) => {
   if (!event) return null;
 
   const { start, end, isAllDay } = getEventTimes(event);
-
-  const formatDateTime = (date: Date) => {
-    if (isAllDay) {
-      return date.toLocaleDateString("ko-KR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    }
-    return date.toLocaleString("ko-KR", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   return (
     <>
@@ -65,7 +51,7 @@ export const EventDetailModal = ({ event, onClose }: EventDetailModalProps) => {
           <div className={flex({ align: "center", gap: "3" })}>
             <div
               className={css({ w: "4", h: "4", borderRadius: "sm", flexShrink: 0 })}
-              style={{ backgroundColor: event.calendarColor || "#4285f4" }}
+              style={{ backgroundColor: event.calendarColor || COLORS.GOOGLE_CALENDAR_DEFAULT }}
             />
             <h3 className={css({ fontSize: "xl", fontWeight: "semibold", color: "gray.900" })}>
               {event.summary || "(제목 없음)"}
@@ -91,10 +77,10 @@ export const EventDetailModal = ({ event, onClose }: EventDetailModalProps) => {
           <div className={flex({ align: "start", gap: "3" })}>
             <span className={css({ fontSize: "lg" })}>🕐</span>
             <div>
-              <div className={css({ color: "gray.900" })}>{formatDateTime(start)}</div>
+              <div className={css({ color: "gray.900" })}>{formatDateTime(start, isAllDay)}</div>
               {!isAllDay && (
                 <div className={css({ color: "gray.600", fontSize: "sm" })}>
-                  ~ {formatDateTime(end)}
+                  ~ {formatDateTime(end, isAllDay)}
                 </div>
               )}
               {isAllDay && (
@@ -117,7 +103,7 @@ export const EventDetailModal = ({ event, onClose }: EventDetailModalProps) => {
               <span className={css({ fontSize: "lg" })}>📝</span>
               <div
                 className={css({ color: "gray.700", fontSize: "sm", whiteSpace: "pre-wrap" })}
-                dangerouslySetInnerHTML={{ __html: event.description }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.description) }}
               />
             </div>
           )}

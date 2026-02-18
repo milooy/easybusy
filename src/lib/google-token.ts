@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { withRetry } from './retry';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
@@ -55,46 +56,64 @@ export const isTokenExpired = (expiresAt: string): boolean => {
 };
 
 /**
- * 토큰 갱신
+ * Google OAuth 토큰 갱신 요청 (내부 함수)
  */
-export const refreshGoogleToken = async (token: GoogleToken): Promise<string | null> => {
+const requestTokenRefresh = async (
+  token: GoogleToken
+): Promise<{ access_token: string; expires_in: number }> => {
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET || "",
+      refresh_token: token.refresh_token,
+      grant_type: "refresh_token",
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Token refresh failed: ${response.status} - ${errorText}`);
+  }
+
+  return response.json();
+};
+
+/**
+ * 토큰 갱신 (지수 백오프 재시도 적용)
+ */
+export const refreshGoogleToken = async (
+  token: GoogleToken
+): Promise<string | null> => {
   try {
-    const response = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: GOOGLE_CLIENT_ID,
-        client_secret: GOOGLE_CLIENT_SECRET || '',
-        refresh_token: token.refresh_token,
-        grant_type: 'refresh_token',
-      }),
+    // 3회 재시도, 1초 → 2초 → 4초 딜레이
+    const data = await withRetry(() => requestTokenRefresh(token), {
+      maxRetries: 3,
+      baseDelayMs: 1000,
     });
 
-    if (!response.ok) {
-      console.error('Token refresh failed');
-      return null;
-    }
-
-    const data = await response.json();
-    const newExpiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString();
+    const newExpiresAt = new Date(
+      Date.now() + data.expires_in * 1000
+    ).toISOString();
 
     // DB 업데이트
     const { error } = await supabase
-      .from('google_tokens')
+      .from("google_tokens")
       .update({
         access_token: data.access_token,
         expires_at: newExpiresAt,
       })
-      .eq('id', token.id);
+      .eq("id", token.id);
 
     if (error) {
-      console.error('Failed to update token:', error);
+      console.error("Failed to update token:", error);
       return null;
     }
 
     return data.access_token;
   } catch (error) {
-    console.error('Token refresh error:', error);
+    console.error("Token refresh error after retries:", error);
     return null;
   }
 };

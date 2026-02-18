@@ -1,6 +1,8 @@
 "use client";
 
 import { GoogleEvent, getEventTimes } from "@/lib/google-calendar";
+import { formatTime } from "@/lib/date-utils";
+import { COLORS } from "@/lib/constants";
 import { css } from "../../../styled-system/css";
 
 interface DailyTimelineProps {
@@ -10,29 +12,24 @@ interface DailyTimelineProps {
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
+/**
+ * 이벤트의 타임라인 위치 계산 (모듈 스코프로 분리하여 리렌더링 최적화)
+ */
+const getEventPosition = (event: GoogleEvent) => {
+  const { start, end } = getEventTimes(event);
+  const startHour = start.getHours() + start.getMinutes() / 60;
+  const endHour = end.getHours() + end.getMinutes() / 60;
+  const duration = endHour - startHour;
+
+  return {
+    top: `${startHour * 60}px`,
+    height: `${Math.max(duration * 60, 24)}px`,
+  };
+};
+
 export const DailyTimeline = ({ events, onEventClick }: DailyTimelineProps) => {
   const allDayEvents = events.filter((e) => !e.start.dateTime);
   const timedEvents = events.filter((e) => e.start.dateTime);
-
-  const getEventPosition = (event: GoogleEvent) => {
-    const { start, end } = getEventTimes(event);
-    const startHour = start.getHours() + start.getMinutes() / 60;
-    const endHour = end.getHours() + end.getMinutes() / 60;
-    const duration = endHour - startHour;
-
-    return {
-      top: `${startHour * 60}px`,
-      height: `${Math.max(duration * 60, 24)}px`,
-    };
-  };
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("ko-KR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-  };
 
   return (
     <div className={css({ display: "flex", flexDirection: "column", gap: "4" })}>
@@ -56,7 +53,7 @@ export const DailyTimeline = ({ events, onEventClick }: DailyTimelineProps) => {
                   transition: "opacity 0.2s",
                   _hover: { opacity: 0.8 },
                 })}
-                style={{ backgroundColor: event.calendarColor || "#4285f4" }}
+                style={{ backgroundColor: event.calendarColor || COLORS.GOOGLE_CALENDAR_DEFAULT }}
               >
                 {event.summary || "(제목 없음)"}
               </button>
@@ -124,7 +121,7 @@ export const DailyTimeline = ({ events, onEventClick }: DailyTimelineProps) => {
                 style={{
                   top: position.top,
                   height: position.height,
-                  backgroundColor: event.calendarColor || "#4285f4",
+                  backgroundColor: event.calendarColor || COLORS.GOOGLE_CALENDAR_DEFAULT,
                 }}
               >
                 <div className={css({ fontSize: "xs", fontWeight: "medium", color: "white", truncate: true })}>

@@ -8,35 +8,17 @@ import {
   getGoogleTokensWithRefresh,
 } from "@/lib/google-calendar";
 import { useAuth } from "@/contexts/AuthContext";
-
-const SELECTED_CALENDARS_KEY = "selectedCalendarIds";
-
-// localStorage에서 선택된 캘린더 ID 불러오기
-const getStoredCalendarIds = (): string[] => {
-  if (typeof window === "undefined") return [];
-  try {
-    const stored = localStorage.getItem(SELECTED_CALENDARS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-};
-
-// 선택된 캘린더 ID 저장
-const saveCalendarIds = (ids: string[]) => {
-  if (typeof window === "undefined") return;
-  if (ids.length > 0) {
-    localStorage.setItem(SELECTED_CALENDARS_KEY, JSON.stringify(ids));
-  }
-};
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { STORAGE_KEYS } from "@/lib/constants";
 
 export const useGoogleCalendar = () => {
   const { user } = useAuth();
   const userId = user?.id;
 
-  const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>(
-    getStoredCalendarIds
-  );
+  // useLocalStorage 훅 사용으로 SSR 안전성 및 코드 단순화
+  const [selectedCalendarIds, setSelectedCalendarIds] = useLocalStorage<
+    string[]
+  >(STORAGE_KEYS.SELECTED_CALENDARS, []);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   // 토큰 조회 (1회만 - 다른 쿼리에서 재사용)
@@ -65,7 +47,6 @@ export const useGoogleCalendar = () => {
       if (selectedCalendarIds.length === 0 && data.length > 0) {
         const allIds = data.map((c) => c.id);
         setSelectedCalendarIds(allIds);
-        saveCalendarIds(allIds);
       }
       return data;
     },
@@ -76,13 +57,18 @@ export const useGoogleCalendar = () => {
     return selectedDate.toISOString().split("T")[0];
   }, [selectedDate]);
 
+  // 캘린더 ID를 정렬된 문자열로 변환 (Query Key 안정성)
+  const calendarKey = useMemo(() => {
+    return [...selectedCalendarIds].sort().join(",");
+  }, [selectedCalendarIds]);
+
   // 일정 조회 (tokenPairs 전달로 중복 조회 방지)
   const {
     data: events = [],
     isLoading: isEventsLoading,
     error: eventsError,
   } = useQuery({
-    queryKey: ["googleEvents", userId, dateKey, selectedCalendarIds],
+    queryKey: ["googleEvents", userId, dateKey, calendarKey],
     queryFn: () =>
       fetchEventsForDate(
         selectedCalendarIds,
@@ -98,16 +84,17 @@ export const useGoogleCalendar = () => {
     staleTime: 1000 * 60 * 2, // 2분
   });
 
-  // 캘린더 선택 토글
-  const toggleCalendar = useCallback((calendarId: string) => {
-    setSelectedCalendarIds((prev) => {
-      const newIds = prev.includes(calendarId)
-        ? prev.filter((id) => id !== calendarId)
-        : [...prev, calendarId];
-      saveCalendarIds(newIds);
-      return newIds;
-    });
-  }, []);
+  // 캘린더 선택 토글 (useLocalStorage가 자동으로 저장)
+  const toggleCalendar = useCallback(
+    (calendarId: string) => {
+      setSelectedCalendarIds((prev) => {
+        return prev.includes(calendarId)
+          ? prev.filter((id) => id !== calendarId)
+          : [...prev, calendarId];
+      });
+    },
+    [setSelectedCalendarIds]
+  );
 
   // 날짜 변경
   const goToDate = useCallback((date: Date) => {
