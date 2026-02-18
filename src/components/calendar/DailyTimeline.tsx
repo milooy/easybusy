@@ -209,6 +209,23 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
             {isActive && currentTimeTop !== null && (
               <CurrentTimeIndicator ref={currentTimeRef} top={currentTimeTop} />
             )}
+
+            {/* 오늘 현재시각 이전 영역 반투명 오버레이 */}
+            {isActive && currentTimeTop !== null && (
+              <div
+                className={css({
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  background: "white",
+                  opacity: 0.5,
+                  pointerEvents: "none",
+                  zIndex: 5,
+                })}
+                style={{ height: `${currentTimeTop}px` }}
+              />
+            )}
           </div>
 
           {/* 현재 시간 라벨 */}
