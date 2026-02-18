@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/components/AuthGuard";
 import { PageLayout } from "@/components/layout/PageLayout";
 import {
+  CalendarSelector,
+  GoogleConnectButton,
+} from "@/components/calendar";
+import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
+import {
   useUserSettings,
   type UserSettings,
   type OffTimeRange,
@@ -22,6 +27,12 @@ function formatHour(hour: number): string {
 function SettingsContent() {
   const router = useRouter();
   const { settings, setSettings } = useUserSettings();
+  const {
+    calendars,
+    selectedCalendarIds,
+    connectedEmails,
+    toggleCalendar,
+  } = useGoogleCalendar();
 
   const [draft, setDraft] = useState<UserSettings>(settings);
 
@@ -83,10 +94,28 @@ function SettingsContent() {
             color: "gray.900",
           })}
         >
-          캘린더 설정
+          설정
         </h1>
       </div>
 
+      {/* 캘린더 선택 */}
+      <div className={css({ mb: "4" })}>
+        <CalendarSelector
+          calendars={calendars}
+          selectedIds={selectedCalendarIds}
+          onToggle={toggleCalendar}
+        />
+      </div>
+
+      {/* Google 계정 연결 */}
+      <div className={css({ mb: "4" })}>
+        <GoogleConnectButton
+          connectedEmails={connectedEmails}
+          onDisconnect={() => {}}
+        />
+      </div>
+
+      {/* 시간 설정 */}
       <div
         className={css({
           bg: "white",
