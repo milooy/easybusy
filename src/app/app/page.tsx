@@ -63,16 +63,18 @@ function AppContent() {
   };
 
   return (
-    <PageLayout maxWidth={maxWidth} showFooter={false}>
+    <PageLayout maxWidth={maxWidth} showFooter={false} fullHeight={isConnected === true}>
       {isConnected === null && <LoadingState onSignOut={signOut} />}
 
       {isConnected === false && <GoogleConnectState onSignOut={signOut} />}
 
       {isConnected && (
         <>
-          <AppHeader showSettings onSignOut={signOut} />
+          <div className={css({ flexShrink: 0 })}>
+            <AppHeader showSettings onSignOut={signOut} />
+          </div>
 
-          <div className={css({ mb: "4" })}>
+          <div className={css({ flexShrink: 0, mb: "4" })}>
             <DateNavigation
               date={selectedDate}
               onPrevDay={goToPrevDay}
@@ -82,15 +84,19 @@ function AppContent() {
           </div>
 
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
-            <div className={flex({ align: "flex-start", gap: "4" })}>
-              <div className={css({ flex: 1, minW: 0 })}>
-                <CalendarSection
-                  events={events}
-                  selectedDate={selectedDate}
-                  loading={loading}
-                  error={error}
-                />
-                <PlanArea events={events} selectedDate={selectedDate} />
+            <div className={flex({ align: "stretch", gap: "4", flex: 1, overflow: "hidden", minH: 0 })}>
+              <div className={css({ flex: 1, minW: 0, display: "flex", flexDirection: "column", overflow: "hidden" })}>
+                <div className={css({ flex: 1, minH: 0, overflowY: "auto" })}>
+                  <CalendarSection
+                    events={events}
+                    selectedDate={selectedDate}
+                    loading={loading}
+                    error={error}
+                  />
+                </div>
+                <div className={css({ flexShrink: 0 })}>
+                  <PlanArea events={events} selectedDate={selectedDate} />
+                </div>
               </div>
               <TodoInbox />
             </div>

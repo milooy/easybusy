@@ -6,7 +6,7 @@ export const useCurrentTime = (
   isActive: boolean
 ) => {
   const [now, setNow] = useState(() => new Date());
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const currentTimeRef = useRef<HTMLDivElement>(null);
 
   // 1분마다 현재 시간 갱신
   useEffect(() => {
@@ -15,14 +15,15 @@ export const useCurrentTime = (
     return () => clearInterval(interval);
   }, [isActive]);
 
-  // 마운트 시 현재 시간 위치로 자동 스크롤
+  // 현재 시간 인디케이터가 마운트되면 스크롤
   useEffect(() => {
-    if (!isActive || !scrollContainerRef.current) return;
-    const currentHour = now.getHours() + now.getMinutes() / 60;
-    const scrollTop = (currentHour - startHour) * 60 - 120;
-    scrollContainerRef.current.scrollTop = Math.max(0, scrollTop);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!isActive || !currentTimeRef.current) return;
+    // 약간의 지연 후 스크롤 (렌더링 완료 대기)
+    const timer = setTimeout(() => {
+      currentTimeRef.current?.scrollIntoView({ block: "center", behavior: "instant" });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [isActive]);
 
   const currentTimeTop = useMemo(() => {
     const currentHour = now.getHours() + now.getMinutes() / 60;
@@ -36,5 +37,5 @@ export const useCurrentTime = (
     [now]
   );
 
-  return { scrollContainerRef, currentTimeTop, currentTimeLabel };
+  return { currentTimeRef, currentTimeTop, currentTimeLabel };
 };

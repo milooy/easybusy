@@ -31,8 +31,6 @@ export function TodoInbox() {
         p: "4",
         display: "flex",
         flexDirection: "column",
-        h: "fit-content",
-        maxH: "calc(100vh - 200px)",
         overflow: "hidden",
       })}
     >
