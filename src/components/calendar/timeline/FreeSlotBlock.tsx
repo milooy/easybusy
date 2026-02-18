@@ -1,11 +1,14 @@
 "use client";
 
+import { useState, useRef } from "react";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
-import { Check, GripVertical } from "lucide-react";
+import { Check, GripVertical, Plus } from "lucide-react";
 import { css } from "../../../../styled-system/css";
 import { flex } from "../../../../styled-system/patterns";
 import { BLOCK_MARGIN, formatHour } from "./timelineUtils";
 import type { Todo } from "@/types/todo";
+
+const MIN_HEIGHT_FOR_INPUT = 40;
 
 interface FreeSlotBlockProps {
   slotStart: number;
@@ -14,6 +17,7 @@ interface FreeSlotBlockProps {
   selectedDate: string;
   assignedTodos: Todo[];
   onToggle: (id: string) => void;
+  onAddTodo: (title: string) => void;
 }
 
 export const FreeSlotBlock = ({
@@ -23,12 +27,25 @@ export const FreeSlotBlock = ({
   selectedDate,
   assignedTodos,
   onToggle,
+  onAddTodo,
 }: FreeSlotBlockProps) => {
   const top = (slotStart - timelineStartHour) * 60 + BLOCK_MARGIN;
   const height = (slotEnd - slotStart) * 60 - BLOCK_MARGIN * 2;
 
   const droppableId = `freeslot_${selectedDate}_${slotStart}`;
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
+
+  const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = () => {
+    const trimmed = inputValue.trim();
+    if (!trimmed) return;
+    onAddTodo(trimmed);
+    setInputValue("");
+  };
+
+  const showInput = height >= MIN_HEIGHT_FOR_INPUT;
 
   return (
     <div
@@ -69,6 +86,69 @@ export const FreeSlotBlock = ({
           {assignedTodos.map((todo) => (
             <SlotTodoItem key={todo.id} todo={todo} onToggle={onToggle} />
           ))}
+        </div>
+      )}
+
+      {/* 인라인 투두 입력 */}
+      {showInput && (
+        <div
+          className={flex({
+            align: "center",
+            gap: "1",
+            px: "2",
+            pb: "1.5",
+            mt: "auto",
+            flexShrink: 0,
+          })}
+        >
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSubmit();
+              if (e.key === "Escape") {
+                setInputValue("");
+                inputRef.current?.blur();
+              }
+            }}
+            placeholder="할 일 추가..."
+            className={css({
+              flex: 1,
+              px: "1.5",
+              py: "0.5",
+              fontSize: "xs",
+              bg: "transparent",
+              border: "1px solid",
+              borderColor: "yellow.300",
+              borderRadius: "sm",
+              outline: "none",
+              color: "gray.700",
+              _focus: { borderColor: "yellow.500", bg: "white" },
+              _placeholder: { color: "yellow.400" },
+            })}
+          />
+          <button
+            onClick={handleSubmit}
+            disabled={!inputValue.trim()}
+            className={css({
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              w: "5",
+              h: "5",
+              bg: "yellow.400",
+              color: "white",
+              borderRadius: "sm",
+              cursor: "pointer",
+              flexShrink: 0,
+              _hover: { bg: "yellow.500" },
+              _disabled: { bg: "yellow.200", cursor: "not-allowed" },
+            })}
+          >
+            <Plus size={12} />
+          </button>
         </div>
       )}
     </div>
