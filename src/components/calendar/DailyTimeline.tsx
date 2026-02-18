@@ -107,6 +107,40 @@ export const DailyTimeline = ({ events, onEventClick }: DailyTimelineProps) => {
             />
           ))}
 
+          {/* 휴식 블록 */}
+          {settings.dailyOffTimes.map((offTime, index) => {
+            const top = (offTime.startHour - startHour) * 60;
+            const height = (offTime.endHour - offTime.startHour) * 60;
+
+            return (
+              <div
+                key={`off-${index}`}
+                className={css({
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bg: "gray.100",
+                  borderRadius: "sm",
+                  zIndex: 0,
+                })}
+                style={{ top: `${top}px`, height: `${height}px` }}
+              >
+                <span
+                  className={css({
+                    fontSize: "xs",
+                    color: "gray.400",
+                    fontWeight: "medium",
+                  })}
+                >
+                  휴식
+                </span>
+              </div>
+            );
+          })}
+
           {/* 이벤트 블록 */}
           {timedEvents.map((event) => {
             const position = getEventPosition(event, startHour);
