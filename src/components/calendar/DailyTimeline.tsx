@@ -16,6 +16,7 @@ import { OffTimeBlock } from "./timeline/OffTimeBlock";
 import { TimedEventBlock } from "./timeline/TimedEventBlock";
 import { CurrentTimeIndicator } from "./timeline/CurrentTimeIndicator";
 import { InactiveTimeBlock } from "./timeline/InactiveTimeBlock";
+import { TimeRangeHandle } from "./timeline/TimeRangeHandle";
 
 const TIMELINE_START = 0;
 const TIMELINE_END = 24;
@@ -136,27 +137,39 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
               />
             ))}
 
-            {/* startTime 이전 비활성 영역 (핸들 위치: bottom) */}
+            {/* startTime 이전 비활성 영역 배경 */}
             {startHour > TIMELINE_START && (
               <InactiveTimeBlock
                 startHour={TIMELINE_START}
                 endHour={startHour}
                 timelineStartHour={TIMELINE_START}
-                handlePosition="bottom"
-                onHandleMouseDown={startHandleProps.onMouseDown}
               />
             )}
 
-            {/* endTime 이후 비활성 영역 (핸들 위치: top) */}
+            {/* endTime 이후 비활성 영역 배경 */}
             {endHour < TIMELINE_END && (
               <InactiveTimeBlock
                 startHour={endHour}
                 endHour={TIMELINE_END}
                 timelineStartHour={TIMELINE_START}
-                handlePosition="top"
-                onHandleMouseDown={endHandleProps.onMouseDown}
               />
             )}
+
+            {/* 업무 시작 배지 - 항상 표시 */}
+            <TimeRangeHandle
+              top={startHour * 60}
+              label="업무 시작"
+              currentHour={startHour}
+              onMouseDown={startHandleProps.onMouseDown}
+            />
+
+            {/* 업무 종료 배지 - 항상 표시 */}
+            <TimeRangeHandle
+              top={endHour * 60}
+              label="업무 종료"
+              currentHour={endHour}
+              onMouseDown={endHandleProps.onMouseDown}
+            />
 
             {/* 활성 시간대 자유 슬롯 */}
             {freeSlots.map(([slotStart, slotEnd], index) => (
