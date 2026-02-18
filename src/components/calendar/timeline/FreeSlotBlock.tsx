@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { css } from "../../../../styled-system/css";
 import { flex } from "../../../../styled-system/patterns";
@@ -30,10 +30,20 @@ export const FreeSlotBlock = ({
 }: FreeSlotBlockProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const top = (slotStart - timelineStartHour) * 60 + BLOCK_MARGIN;
   const height = (slotEnd - slotStart) * 60 - BLOCK_MARGIN * 2;
   const showInput = isHovered || isInputFocused;
+
+  const handleMouseEnter = () => {
+    clearTimeout(leaveTimerRef.current);
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    leaveTimerRef.current = setTimeout(() => setIsHovered(false), 150);
+  };
 
   const droppableId = `freeslot_${selectedDate}_${slotStart}`;
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
@@ -41,8 +51,8 @@ export const FreeSlotBlock = ({
   return (
     <div
       ref={setNodeRef}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       className={css({
         position: "absolute",
         left: "4px",
@@ -92,6 +102,8 @@ export const FreeSlotBlock = ({
       {/* 슬롯 외부 하단 - hover/focus 시에만 표시 */}
       {showInput && (
         <div
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           className={css({
             position: "absolute",
             left: 0,
