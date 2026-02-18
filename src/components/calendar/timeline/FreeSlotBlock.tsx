@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useDroppable, useDraggable } from "@dnd-kit/core";
-import { Check, GripVertical, Plus } from "lucide-react";
+import { useDroppable } from "@dnd-kit/core";
 import { css } from "../../../../styled-system/css";
 import { flex } from "../../../../styled-system/patterns";
 import { BLOCK_MARGIN, formatHour } from "./timelineUtils";
+import { SlotTodoItem } from "./freeSlotBlock/SlotTodoItem";
+import { SlotTodoInput } from "./freeSlotBlock/SlotTodoInput";
 import type { Todo } from "@/types/todo";
 
 const MIN_HEIGHT_FOR_INPUT = 40;
@@ -34,18 +34,6 @@ export const FreeSlotBlock = ({
 
   const droppableId = `freeslot_${selectedDate}_${slotStart}`;
   const { setNodeRef, isOver } = useDroppable({ id: droppableId });
-
-  const [inputValue, setInputValue] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleSubmit = () => {
-    const trimmed = inputValue.trim();
-    if (!trimmed) return;
-    onAddTodo(trimmed);
-    setInputValue("");
-  };
-
-  const showInput = height >= MIN_HEIGHT_FOR_INPUT;
 
   return (
     <div
@@ -90,123 +78,7 @@ export const FreeSlotBlock = ({
       )}
 
       {/* 인라인 투두 입력 */}
-      {showInput && (
-        <div
-          className={flex({
-            align: "center",
-            gap: "1",
-            px: "2",
-            pb: "1.5",
-            mt: "auto",
-            flexShrink: 0,
-          })}
-        >
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSubmit();
-              if (e.key === "Escape") {
-                setInputValue("");
-                inputRef.current?.blur();
-              }
-            }}
-            placeholder="할 일 추가..."
-            className={css({
-              flex: 1,
-              px: "1.5",
-              py: "0.5",
-              fontSize: "xs",
-              bg: "transparent",
-              border: "1px solid",
-              borderColor: "yellow.300",
-              borderRadius: "sm",
-              outline: "none",
-              color: "gray.700",
-              _focus: { borderColor: "yellow.500", bg: "white" },
-              _placeholder: { color: "yellow.400" },
-            })}
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={!inputValue.trim()}
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              w: "5",
-              h: "5",
-              bg: "yellow.400",
-              color: "white",
-              borderRadius: "sm",
-              cursor: "pointer",
-              flexShrink: 0,
-              _hover: { bg: "yellow.500" },
-              _disabled: { bg: "yellow.200", cursor: "not-allowed" },
-            })}
-          >
-            <Plus size={12} />
-          </button>
-        </div>
-      )}
+      {height >= MIN_HEIGHT_FOR_INPUT && <SlotTodoInput onAdd={onAddTodo} />}
     </div>
   );
 };
-
-function SlotTodoItem({ todo, onToggle }: { todo: Todo; onToggle: (id: string) => void }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: todo.id });
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{ opacity: isDragging ? 0.3 : 1 }}
-      className={flex({ align: "center", gap: "1.5", py: "0.5" })}
-    >
-      <button
-        {...listeners}
-        {...attributes}
-        className={css({
-          color: "yellow.400",
-          cursor: "grab",
-          flexShrink: 0,
-          _hover: { color: "yellow.600" },
-          _active: { cursor: "grabbing" },
-        })}
-      >
-        <GripVertical size={12} />
-      </button>
-      <button
-        onClick={() => onToggle(todo.id)}
-        className={css({
-          w: "4",
-          h: "4",
-          border: "1.5px solid",
-          borderColor: todo.completed ? "blue.500" : "yellow.500",
-          borderRadius: "sm",
-          bg: todo.completed ? "blue.500" : "white",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          cursor: "pointer",
-          _hover: { borderColor: "blue.400" },
-        })}
-      >
-        {todo.completed && <Check size={10} color="white" strokeWidth={3} />}
-      </button>
-      <span
-        className={css({
-          fontSize: "xs",
-          color: todo.completed ? "gray.400" : "gray.700",
-          textDecoration: todo.completed ? "line-through" : "none",
-          wordBreak: "break-word",
-          lineHeight: "tight",
-        })}
-      >
-        {todo.title}
-      </span>
-    </div>
-  );
-}
