@@ -68,6 +68,8 @@ const getFreeSlots = (
  * 이벤트의 타임라인 위치 계산
  * @param startHourOffset 타임라인 시작 시간 (설정에 따른 오프셋)
  */
+const BLOCK_MARGIN = 2;
+
 const getEventPosition = (event: GoogleEvent, startHourOffset: number) => {
   const { start, end } = getEventTimes(event);
   const startHour = start.getHours() + start.getMinutes() / 60;
@@ -75,8 +77,8 @@ const getEventPosition = (event: GoogleEvent, startHourOffset: number) => {
   const duration = endHour - startHour;
 
   return {
-    top: `${(startHour - startHourOffset) * 60}px`,
-    height: `${Math.max(duration * 60, 24)}px`,
+    top: `${(startHour - startHourOffset) * 60 + BLOCK_MARGIN}px`,
+    height: `${Math.max(duration * 60 - BLOCK_MARGIN * 2, 20)}px`,
   };
 };
 
@@ -207,8 +209,8 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
 
             {/* 빈 슬롯 블록 (연노랑) */}
             {freeSlots.map(([slotStart, slotEnd], index) => {
-              const top = (slotStart - startHour) * 60;
-              const height = (slotEnd - slotStart) * 60;
+              const top = (slotStart - startHour) * 60 + BLOCK_MARGIN;
+              const height = (slotEnd - slotStart) * 60 - BLOCK_MARGIN * 2;
 
               return (
                 <div
@@ -236,8 +238,8 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
 
             {/* 휴식 블록 */}
             {settings.dailyOffTimes.map((offTime, index) => {
-              const top = (offTime.startHour - startHour) * 60;
-              const height = (offTime.endHour - offTime.startHour) * 60;
+              const top = (offTime.startHour - startHour) * 60 + BLOCK_MARGIN;
+              const height = (offTime.endHour - offTime.startHour) * 60 - BLOCK_MARGIN * 2;
 
               return (
                 <div
