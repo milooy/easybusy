@@ -85,14 +85,18 @@ function AppContent() {
 
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
             <div className={flex({ align: "stretch", gap: "4", flex: 1, overflow: "hidden", minH: 0 })}>
-              <div className={css({ flex: 1, minW: 0, overflowY: "auto" })}>
-                <CalendarSection
-                  events={events}
-                  selectedDate={selectedDate}
-                  loading={loading}
-                  error={error}
-                />
-                <PlanArea events={events} selectedDate={selectedDate} />
+              <div className={css({ flex: 1, minW: 0, display: "flex", flexDirection: "column", overflow: "hidden" })}>
+                <div className={css({ flex: 1, minH: 0, overflowY: "auto" })}>
+                  <CalendarSection
+                    events={events}
+                    selectedDate={selectedDate}
+                    loading={loading}
+                    error={error}
+                  />
+                </div>
+                <div className={css({ flexShrink: 0 })}>
+                  <PlanArea events={events} selectedDate={selectedDate} />
+                </div>
               </div>
               <TodoInbox />
             </div>
