@@ -1,6 +1,7 @@
 "use client";
 
-import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { useState } from "react";
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { AuthGuard } from "@/components/AuthGuard";
 import { CalendarSection, DateNavigation, GoogleConnectButton } from "@/components/calendar";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -9,6 +10,7 @@ import { TodoInbox } from "@/components/todo/TodoInbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { useTodos } from "@/hooks/useTodos";
+import type { Todo } from "@/types/todo";
 import { css } from "../../../styled-system/css";
 import { flex } from "../../../styled-system/patterns";
 
@@ -24,7 +26,8 @@ function AppContent() {
   const { signOut } = useAuth();
   const { events, selectedDate, loading, error, isConnected, goToPrevDay, goToNextDay, goToToday } =
     useGoogleCalendar();
-  const { updateTodo } = useTodos();
+  const { todos, updateTodo } = useTodos();
+  const [activeTodo, setActiveTodo] = useState<Todo | null>(null);
 
   const maxWidth = isConnected === null || !isConnected ? "md" : "4xl";
 
@@ -34,7 +37,14 @@ function AppContent() {
     })
   );
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const todo = todos.find((t) => t.id === event.active.id);
+    setActiveTodo(todo ?? null);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
+    setActiveTodo(null);
+
     const { active, over } = event;
     if (!over) return;
 
@@ -68,7 +78,7 @@ function AppContent() {
             />
           </div>
 
-          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <div className={flex({ align: "flex-start", gap: "4" })}>
               <CalendarSection
                 events={events}
@@ -78,10 +88,35 @@ function AppContent() {
               />
               <TodoInbox />
             </div>
+            <DragOverlay>
+              {activeTodo && <TodoDragPreview todo={activeTodo} />}
+            </DragOverlay>
           </DndContext>
         </>
       )}
     </PageLayout>
+  );
+}
+
+function TodoDragPreview({ todo }: { todo: Todo }) {
+  return (
+    <div
+      className={css({
+        bg: "white",
+        borderRadius: "md",
+        boxShadow: "lg",
+        px: "3",
+        py: "2",
+        fontSize: "sm",
+        color: "gray.800",
+        cursor: "grabbing",
+        opacity: 0.95,
+        maxW: "240px",
+        wordBreak: "break-word",
+      })}
+    >
+      {todo.title}
+    </div>
   );
 }
 
