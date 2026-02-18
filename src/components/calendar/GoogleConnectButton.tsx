@@ -9,7 +9,7 @@ interface GoogleConnectButtonProps {
   onDisconnect: (tokenId: string) => void;
 }
 
-export const GoogleConnectButton = ({ connectedEmails, onDisconnect }: GoogleConnectButtonProps) => {
+export const GoogleConnectButton = ({ connectedEmails, onDisconnect: _onDisconnect }: GoogleConnectButtonProps) => {
   const handleConnect = () => {
     window.location.href = '/api/google/auth';
   };

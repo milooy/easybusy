@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { GoogleEvent, getEventTimes } from "@/lib/google-calendar";
 import { formatTime, isToday } from "@/lib/date-utils";
 import { COLORS } from "@/lib/constants";
-import { useUserSettings } from "@/hooks/useUserSettings";
+import { useUserSettings, OffTimeRange } from "@/hooks/useUserSettings";
 import { css } from "../../../styled-system/css";
 
 interface DailyTimelineProps {
@@ -12,6 +12,51 @@ interface DailyTimelineProps {
   onEventClick: (event: GoogleEvent) => void;
   selectedDate: Date;
 }
+
+/**
+ * startHour~endHour 범위에서 휴식 시간과 이벤트가 없는 빈 슬롯 계산
+ */
+const getFreeSlots = (
+  startHour: number,
+  endHour: number,
+  offTimes: OffTimeRange[],
+  timedEvents: GoogleEvent[]
+): [number, number][] => {
+  const occupied: [number, number][] = [
+    ...offTimes.map((o) => [o.startHour, o.endHour] as [number, number]),
+    ...timedEvents.map((event) => {
+      const { start, end } = getEventTimes(event);
+      const s = start.getHours() + start.getMinutes() / 60;
+      const e = end.getHours() + end.getMinutes() / 60;
+      return [s, e] as [number, number];
+    }),
+  ];
+
+  const clipped = occupied
+    .map(([s, e]) => [Math.max(s, startHour), Math.min(e, endHour)] as [number, number])
+    .filter(([s, e]) => s < e);
+
+  clipped.sort((a, b) => a[0] - b[0]);
+
+  const merged: [number, number][] = [];
+  for (const [s, e] of clipped) {
+    if (merged.length === 0 || merged[merged.length - 1][1] < s) {
+      merged.push([s, e]);
+    } else {
+      merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], e);
+    }
+  }
+
+  const freeSlots: [number, number][] = [];
+  let current = startHour;
+  for (const [s, e] of merged) {
+    if (current < s) freeSlots.push([current, s]);
+    current = Math.max(current, e);
+  }
+  if (current < endHour) freeSlots.push([current, endHour]);
+
+  return freeSlots;
+};
 
 /**
  * 이벤트의 타임라인 위치 계산
@@ -41,6 +86,12 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
 
   const allDayEvents = events.filter((e) => !e.start.dateTime);
   const timedEvents = events.filter((e) => e.start.dateTime);
+
+  const freeSlots = useMemo(
+    () => getFreeSlots(startHour, endHour, settings.dailyOffTimes, timedEvents),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [startHour, endHour, settings.dailyOffTimes, events]
+  );
 
   const showCurrentTime = isToday(selectedDate);
 
@@ -147,6 +198,26 @@ export const DailyTimeline = ({ events, onEventClick, selectedDate }: DailyTimel
                 })}
               />
             ))}
+
+            {/* 빈 슬롯 블록 (연노랑) */}
+            {freeSlots.map(([slotStart, slotEnd], index) => {
+              const top = (slotStart - startHour) * 60;
+              const height = (slotEnd - slotStart) * 60;
+
+              return (
+                <div
+                  key={`free-${index}`}
+                  className={css({
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    bg: "yellow.50",
+                    zIndex: 0,
+                  })}
+                  style={{ top: `${top}px`, height: `${height}px` }}
+                />
+              );
+            })}
 
             {/* 휴식 블록 */}
             {settings.dailyOffTimes.map((offTime, index) => {
